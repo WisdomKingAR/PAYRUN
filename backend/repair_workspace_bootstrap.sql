@@ -127,3 +127,36 @@ USING (
     AND b.owner_id = auth.uid()
   )
 );
+
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+    AND p.proname = 'rls_auto_enable'
+    AND pg_get_function_identity_arguments(p.oid) = ''
+  ) THEN
+    REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM PUBLIC;
+    REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM anon;
+    REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM authenticated;
+  END IF;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS set_updated_at_businesses ON businesses;
+DROP TRIGGER IF EXISTS set_updated_at_employees ON employees;
+CREATE TRIGGER set_updated_at_businesses BEFORE UPDATE ON businesses FOR EACH ROW EXECUTE FUNCTION update_timestamp();
+CREATE TRIGGER set_updated_at_employees BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION update_timestamp();

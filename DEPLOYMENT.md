@@ -31,6 +31,8 @@ https://your-payrun-domain.vercel.app
 https://your-payrun-domain.vercel.app/reset-password
 ```
 
+In Authentication, Password Security, enable leaked password protection if your Supabase plan supports it. Supabase exposes this as a project Auth setting, not a SQL setting.
+
 ## 3. Vercel Frontend
 
 1. Import `WisdomKingAR/PAYRUN` in Vercel.
@@ -63,4 +65,5 @@ After the deployment finishes:
 - If login works but the dashboard says the workspace could not load, run `backend/setup.sql` again and check Supabase Auth URL settings.
 - If the error mentions multiple rows, run `backend/repair_workspace_bootstrap.sql`.
 - If payroll confirmation says `new row violates row-level security policy for table "employee_payroll"`, run `backend/repair_workspace_bootstrap.sql` so Supabase gets the latest payroll row insert/update/delete policies.
+- If Supabase's database linter warns about `update_timestamp` search path or `rls_auto_enable` execution privileges, run `backend/repair_workspace_bootstrap.sql`.
 - If Vercel builds but the app cannot reach Supabase, recheck the two `VITE_SUPABASE_*` environment variables.

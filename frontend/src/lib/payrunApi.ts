@@ -115,6 +115,35 @@ const normalizePayrollRun = (row: RawRow): PayrollRun => {
   };
 };
 
+const attachEmployeePayrollRows = async (runs: PayrollRun[]) => {
+  const runIds = runs.map((run) => run.id);
+
+  if (runIds.length === 0) return runs;
+
+  const { data, error } = await supabase
+    .from('employee_payroll')
+    .select('*')
+    .in('payroll_run_id', runIds)
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+
+  const rowsByRun = new Map<string, EmployeePayrollResult[]>();
+  (data ?? []).forEach((row) => {
+    const record = asRecord(row);
+    const runId = String(record.payroll_run_id ?? '');
+    const rows = rowsByRun.get(runId) ?? [];
+
+    rows.push(normalizePayrollResult(record));
+    rowsByRun.set(runId, rows);
+  });
+
+  return runs.map((run) => ({
+    ...run,
+    employee_payroll: rowsByRun.get(run.id) ?? run.employee_payroll ?? [],
+  }));
+};
+
 export async function createBusiness(name: string, userId: string) {
   const { data, error } = await supabase
     .from('businesses')
@@ -169,13 +198,17 @@ export async function updateOnboardingStep(businessId: string, step: 1 | 2 | 3) 
   return updateBusiness(businessId, { onboarding_step: step });
 }
 
-export async function getEmployees(businessId: string) {
-  const { data, error } = await supabase
+export async function getEmployees(businessId: string, options: { includeInactive?: boolean } = {}) {
+  let query = supabase
     .from('employees')
     .select('*')
-    .eq('business_id', businessId)
-    .eq('is_active', true)
-    .order('created_at', { ascending: true });
+    .eq('business_id', businessId);
+
+  if (!options.includeInactive) {
+    query = query.eq('is_active', true);
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: true });
 
   if (error) throw error;
   return (data ?? []).map((row) => normalizeEmployee(asRecord(row)));
@@ -207,14 +240,17 @@ export async function updateEmployee(employeeId: string, updates: Partial<Employ
 export async function getPayrollRun(businessId: string, month: string) {
   const { data, error } = await supabase
     .from('payroll_runs')
-    .select('*, employee_payroll(*)')
+    .select('*')
     .eq('business_id', businessId)
     .eq('month', month)
     .order('created_at', { ascending: false })
     .limit(1);
 
   if (error) throw error;
-  return data?.[0] ? normalizePayrollRun(asRecord(data[0])) : null;
+  if (!data?.[0]) return null;
+
+  const [run] = await attachEmployeePayrollRows([normalizePayrollRun(asRecord(data[0]))]);
+  return run;
 }
 
 export async function savePayrollDraft(businessId: string, month: string, draftData: Record<string, PayrollInputs>) {
@@ -340,11 +376,11 @@ export async function confirmPayrollRun(
 export async function getPayrollHistory(businessId: string) {
   const { data, error } = await supabase
     .from('payroll_runs')
-    .select('*, employee_payroll(*)')
+    .select('*')
     .eq('business_id', businessId)
     .eq('status', 'completed')
     .order('month', { ascending: false });
 
   if (error) throw error;
-  return (data ?? []).map((row) => normalizePayrollRun(asRecord(row)));
+  return attachEmployeePayrollRows((data ?? []).map((row) => normalizePayrollRun(asRecord(row))));
 }

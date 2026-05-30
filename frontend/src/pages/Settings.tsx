@@ -18,6 +18,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useWorkspace } from '../hooks/useWorkspace';
 import { createXlsxBlob } from '../utils/xlsxExport';
 import { PageHeader } from '../components/PageHeader';
+import { calculateEmployeePayroll } from '../utils/payrollCalculations';
 
 export const Settings = () => {
   const { business, loading, error, refresh } = useWorkspace();
@@ -79,9 +80,24 @@ export const Settings = () => {
   const exportData = async () => {
     if (!business) return;
 
-    const [employees, payrollHistory] = await Promise.all([getEmployees(business.id), getPayrollHistory(business.id)]);
+    const [employees, payrollHistory] = await Promise.all([
+      getEmployees(business.id, { includeInactive: true }),
+      getPayrollHistory(business.id),
+    ]);
+    const employeesById = new Map(employees.map((employee) => [employee.id, employee]));
+    let reconstructedRows = 0;
     const payrollRows = payrollHistory.flatMap((run) =>
-      (run.employee_payroll ?? []).map((row) => [
+      ((run.employee_payroll ?? []).length > 0
+        ? run.employee_payroll ?? []
+        : Object.entries(run.draft_data ?? {}).flatMap(([employeeId, inputs]) => {
+            const employee = employeesById.get(employeeId);
+
+            if (!employee) return [];
+
+            reconstructedRows += 1;
+            return [calculateEmployeePayroll(employee, inputs, business.state, run.month)];
+          })
+      ).map((row) => [
         run.month_display,
         row.employee_name,
         row.role,
@@ -100,6 +116,14 @@ export const Settings = () => {
         row.esi_employer,
       ]),
     );
+
+    if (reconstructedRows > 0) {
+      setMessage({
+        type: 'info',
+        text: `Recovered ${reconstructedRows} employee payroll rows from saved payroll inputs. Reopen the month and update payroll once to save them permanently.`,
+      });
+    }
+
     const blob = createXlsxBlob([
       {
         name: 'Business Profile',

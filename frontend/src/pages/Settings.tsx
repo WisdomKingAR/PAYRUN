@@ -259,7 +259,7 @@ export const Settings = () => {
 
           {tab === 2 && (
             <Stack spacing={2.5} sx={{ maxWidth: 560 }}>
-              <Alert severity="info">Export downloads an Excel file with your business profile, employees, and payroll history.</Alert>
+              <Alert severity="info">Export downloads a formatted Excel workbook with your business profile, employees, and payroll history.</Alert>
               <Button variant="outlined" onClick={exportData}>
                 Export Excel
               </Button>

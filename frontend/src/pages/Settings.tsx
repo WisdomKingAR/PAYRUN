@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   Alert,
-  Box,
   Button,
   Card,
   CardContent,
@@ -12,10 +11,13 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
+import SaveIcon from '@mui/icons-material/Save';
 import { getEmployees, getPayrollHistory, updateBusiness } from '../lib/payrunApi';
 import { supabase } from '../lib/supabaseClient';
 import { useWorkspace } from '../hooks/useWorkspace';
 import { createXlsxBlob } from '../utils/xlsxExport';
+import { PageHeader } from '../components/PageHeader';
 
 export const Settings = () => {
   const { business, loading, error, refresh } = useWorkspace();
@@ -205,16 +207,16 @@ export const Settings = () => {
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4">Settings</Typography>
-        <Typography color="text.secondary">Company profile, account access, and data export.</Typography>
-      </Box>
+      <PageHeader
+        title="Settings"
+        subtitle="Keep company details, account access, and export controls in one place."
+      />
 
       {message && <Alert severity={message.type}>{message.text}</Alert>}
 
       <Card>
-        <CardContent>
-          <Tabs value={tab} onChange={(_, value: number) => setTab(value)} sx={{ mb: 3 }}>
+        <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+          <Tabs value={tab} onChange={(_, value: number) => setTab(value)} sx={{ mb: 3, borderBottom: '1px solid #DDE5EE' }}>
             <Tab label="Company Profile" />
             <Tab label="Account & Password" />
             <Tab label="Data & Privacy" />
@@ -232,7 +234,7 @@ export const Settings = () => {
                 <MenuItem value="Gujarat">Gujarat</MenuItem>
                 <MenuItem value="Other">Other</MenuItem>
               </TextField>
-              <Button variant="contained" onClick={saveCompany}>
+              <Button variant="contained" onClick={saveCompany} startIcon={<SaveIcon />}>
                 Save Company
               </Button>
             </Stack>
@@ -260,7 +262,7 @@ export const Settings = () => {
           {tab === 2 && (
             <Stack spacing={2.5} sx={{ maxWidth: 560 }}>
               <Alert severity="info">Export downloads a formatted Excel workbook with your business profile, employees, and payroll history.</Alert>
-              <Button variant="outlined" onClick={exportData}>
+              <Button variant="outlined" onClick={exportData} startIcon={<DownloadIcon />}>
                 Export Excel
               </Button>
               <Button variant="contained" color="error" disabled>

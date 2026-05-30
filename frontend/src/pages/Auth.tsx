@@ -102,11 +102,11 @@ export const Auth = ({ mode }: { mode: AuthMode }) => {
 
   return (
     <Box sx={{ minHeight: 'calc(100vh - 120px)', display: 'grid', placeItems: 'center' }}>
-      <Paper sx={{ p: { xs: 3, sm: 4 }, width: '100%', maxWidth: 440 }}>
+      <Paper sx={{ p: { xs: 3, sm: 4 }, width: '100%', maxWidth: 460, border: '1px solid #DDE5EE', borderRadius: 2 }}>
         <Stack spacing={2.25}>
           <Box>
             <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 800 }}>
-              PayRun
+              {isSignup ? 'Create workspace' : 'Welcome back'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {isSignup ? 'Create your payroll workspace.' : 'Log in to your payroll workspace.'}
@@ -143,7 +143,7 @@ export const Auth = ({ mode }: { mode: AuthMode }) => {
           />
 
           <Button variant="contained" size="large" disabled={loading} onClick={handleSubmit}>
-            {loading ? 'Please wait...' : isSignup ? 'Create Account' : 'Log In'}
+            {loading ? 'Please wait...' : isSignup ? 'Create account' : 'Log in'}
           </Button>
 
           {isSignup ? (

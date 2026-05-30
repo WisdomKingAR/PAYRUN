@@ -4,7 +4,12 @@ html {
 
 body {
   margin: 0;
-  background: #f5f7fa;
+  background:
+    radial-gradient(circle at top left, rgba(15, 94, 168, 0.08), transparent 28rem),
+    #eef3f8;
+  color: #13202e;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 #root {
@@ -16,5 +21,6 @@ a {
 }
 
 .money {
-  font-family: 'Roboto Mono', Consolas, monospace;
+  font-family: 'SFMono-Regular', 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  font-variant-numeric: tabular-nums;
 }

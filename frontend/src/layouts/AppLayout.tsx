@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import {
   AppBar,
+  Avatar,
   Box,
   BottomNavigation,
   BottomNavigationAction,
@@ -57,7 +58,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   };
 
   const navigation = (
-    <List sx={{ px: 1.5, py: 2 }}>
+    <List sx={{ px: 1.25, py: 2 }}>
       {navItems.map((item) => {
         const selected = activePath === item.path;
         return (
@@ -66,11 +67,15 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             selected={selected}
             onClick={() => navigate(item.path)}
             sx={{
-              borderRadius: 100,
-              mb: 0.5,
+              borderRadius: 2,
+              mb: 0.75,
+              minHeight: 44,
+              border: '1px solid transparent',
               '&.Mui-selected': {
-                bgcolor: '#E3F2FD',
+                bgcolor: '#EAF3FF',
                 color: 'primary.main',
+                borderColor: '#D1E5FA',
+                '&:hover': { bgcolor: '#EAF3FF' },
               },
             }}
           >
@@ -87,30 +92,41 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: { xs: 8, md: 0 } }}>
       <AppBar sx={{ zIndex: (appTheme) => appTheme.zIndex.drawer + 1 }}>
-        <Toolbar>
-          <Typography
+        <Toolbar sx={{ minHeight: { xs: 58, md: 64 }, px: { xs: 2, md: 3 } }}>
+          <Box
             aria-label="Go to PayRun landing page"
             component="button"
             type="button"
-            variant="h6"
             onClick={() => void handleBrandClick()}
             sx={{
-              color: 'primary.main',
-              fontWeight: 800,
-              flexGrow: 1,
               border: 0,
               bgcolor: 'transparent',
               cursor: 'pointer',
               fontFamily: 'inherit',
               p: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.25,
+              flexGrow: 1,
               textAlign: 'left',
-              '&:hover': { textDecoration: 'underline' },
             }}
           >
-            PayRun
-          </Typography>
+            <Avatar sx={{ width: 34, height: 34, bgcolor: 'primary.main', fontSize: 16, fontWeight: 800 }}>
+              PR
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: 'text.primary', fontWeight: 850, lineHeight: 1 }}>
+                PayRun
+              </Typography>
+              {user && (
+                <Typography variant="caption" color="text.secondary">
+                  Payroll workspace
+                </Typography>
+              )}
+            </Box>
+          </Box>
           {user && (
-            <Button startIcon={<LogoutIcon />} onClick={handleSignOut}>
+            <Button startIcon={<LogoutIcon />} onClick={handleSignOut} variant="text" sx={{ color: 'text.secondary' }}>
               Logout
             </Button>
           )}
@@ -126,8 +142,9 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             '& .MuiDrawer-paper': {
               width: drawerWidth,
               boxSizing: 'border-box',
-              borderRight: '1px solid #ECEFF1',
-              pt: 8,
+              borderRight: '1px solid #DDE5EE',
+              bgcolor: '#FFFFFF',
+              pt: 8.5,
             },
           }}
         >
@@ -136,7 +153,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
         </Drawer>
       )}
 
-      <Box component="main" sx={{ ml: { md: user ? `${drawerWidth}px` : 0 }, pt: 10 }}>
+      <Box component="main" sx={{ ml: { md: user ? `${drawerWidth}px` : 0 }, pt: { xs: 4, md: 4 } }}>
         <Container maxWidth="lg" sx={{ pb: 6 }}>
           {children}
         </Container>

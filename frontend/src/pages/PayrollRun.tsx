@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Card,
-  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -22,12 +21,19 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import DescriptionIcon from '@mui/icons-material/Description';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import PercentIcon from '@mui/icons-material/Percent';
+import SaveIcon from '@mui/icons-material/Save';
 import type { Employee, PayrollInputs } from '../types';
 import { confirmPayrollRun, getEmployees, getPayrollRun, savePayrollDraft } from '../lib/payrunApi';
 import { calculateEmployeePayroll, calculateMaxDaysForEmployee, summarizePayroll } from '../utils/payrollCalculations';
 import { currentMonthKey, formatMoney, formatMonth } from '../utils/format';
 import { useWorkspace } from '../hooks/useWorkspace';
 import { getErrorMessage } from '../utils/errors';
+import { PageHeader } from '../components/PageHeader';
+import { StatCard } from '../components/StatCard';
 
 const defaultInputsFor = (employee: Employee, month: string): PayrollInputs => {
   const maxDays = calculateMaxDaysForEmployee(new Date(employee.joining_date), month);
@@ -156,10 +162,11 @@ export const PayrollRun = () => {
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4">Run Payroll - {formatMonth(month)}</Typography>
-        <Typography color="text.secondary">Bulk input table with live statutory deductions.</Typography>
-      </Box>
+      <PageHeader
+        eyebrow={draftRestored ? 'Draft restored' : 'Current month'}
+        title={`Run payroll for ${formatMonth(month)}`}
+        subtitle="Enter attendance, leave, overtime, and bonus values. Net pay updates live before you confirm the run."
+      />
 
       {business.state !== 'Maharashtra' && (
         <Alert severity="info">
@@ -181,34 +188,14 @@ export const PayrollRun = () => {
       )}
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 2 }}>
-        <Card>
-          <CardContent>
-            <Typography variant="overline">Total Gross</Typography>
-            <Typography variant="h5" className="money">{formatMoney(summary.total_gross)}</Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <Typography variant="overline">Total Net</Typography>
-            <Typography variant="h5" className="money" color="primary">{formatMoney(summary.total_net)}</Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <Typography variant="overline">PF Liability</Typography>
-            <Typography variant="h5" className="money">{formatMoney(summary.total_pf_employee + summary.total_pf_employer)}</Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <Typography variant="overline">ESI Liability</Typography>
-            <Typography variant="h5" className="money">{formatMoney(summary.total_esi_employee + summary.total_esi_employer)}</Typography>
-          </CardContent>
-        </Card>
+        <StatCard label="Total gross" value={<Box component="span" className="money">{formatMoney(summary.total_gross)}</Box>} icon={<DescriptionIcon />} />
+        <StatCard label="Total net" value={<Box component="span" className="money">{formatMoney(summary.total_net)}</Box>} icon={<AccountBalanceWalletIcon />} tone="green" />
+        <StatCard label="PF liability" value={<Box component="span" className="money">{formatMoney(summary.total_pf_employee + summary.total_pf_employer)}</Box>} icon={<PercentIcon />} tone="slate" />
+        <StatCard label="ESI liability" value={<Box component="span" className="money">{formatMoney(summary.total_esi_employee + summary.total_esi_employer)}</Box>} icon={<PercentIcon />} tone="amber" />
       </Box>
 
       <TableContainer component={Card}>
-        <Table>
+        <Table sx={{ minWidth: 980 }}>
           <TableHead>
             <TableRow>
               <TableCell>Employee</TableCell>
@@ -236,7 +223,7 @@ export const PayrollRun = () => {
                       <Typography variant="caption" color="text.secondary">Max {maxDays} days this month</Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell className="money">{formatMoney(employee.gross_salary)}</TableCell>
+                  <TableCell className="money" sx={{ whiteSpace: 'nowrap' }}>{formatMoney(employee.gross_salary)}</TableCell>
                   <TableCell>
                     <TextField
                       type="number"
@@ -272,7 +259,7 @@ export const PayrollRun = () => {
                       onChange={(event) => updateInput(employee, 'bonus', Number(event.target.value))}
                     />
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
                     <Typography className="money" color="primary" sx={{ fontWeight: 700 }}>
                       {formatMoney(result?.net_salary ?? 0)}
                     </Typography>
@@ -287,12 +274,12 @@ export const PayrollRun = () => {
         </Table>
       </TableContainer>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-        <Button variant="contained" disabled={employees.length === 0 || hasInvalidRows} onClick={() => setConfirmOpen(true)}>
-          Confirm & Run Payroll
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ justifyContent: 'flex-end' }}>
+        <Button variant="outlined" disabled={employees.length === 0 || hasInvalidRows || savingDraft} onClick={saveDraft} startIcon={<SaveIcon />}>
+          {savingDraft ? 'Saving...' : 'Save draft'}
         </Button>
-        <Button variant="outlined" disabled={employees.length === 0 || hasInvalidRows || savingDraft} onClick={saveDraft}>
-          {savingDraft ? 'Saving...' : 'Save Draft'}
+        <Button variant="contained" disabled={employees.length === 0 || hasInvalidRows} onClick={() => setConfirmOpen(true)} startIcon={<DoneAllIcon />}>
+          Confirm & Run Payroll
         </Button>
       </Stack>
 

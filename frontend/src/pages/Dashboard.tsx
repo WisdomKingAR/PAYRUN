@@ -11,18 +11,25 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Fab,
   MenuItem,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import GroupsIcon from '@mui/icons-material/Groups';
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
+import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import type { Employee, PayrollRun } from '../types';
 import { getEmployees, getPayrollHistory, updateBusiness, updateOnboardingStep } from '../lib/payrunApi';
 import { currentMonthKey, formatMoney, formatMonth } from '../utils/format';
 import { useWorkspace } from '../hooks/useWorkspace';
+import { EmptyState } from '../components/EmptyState';
+import { PageHeader } from '../components/PageHeader';
+import { StatCard } from '../components/StatCard';
 
 export const Dashboard = () => {
   const { business, loading, error, refresh, setBusiness } = useWorkspace();
@@ -96,10 +103,26 @@ export const Dashboard = () => {
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4">Dashboard</Typography>
-        <Typography color="text.secondary">{business.name}</Typography>
-      </Box>
+      <PageHeader
+        eyebrow={business.state}
+        title={`${business.name} dashboard`}
+        subtitle="A quick payroll control room for this month, your team, and recent payroll activity."
+        actions={
+          <>
+            <Button component={RouterLink} to="/employees/new" variant="outlined" startIcon={<GroupAddIcon />}>
+              Add employee
+            </Button>
+            <Button
+              component={RouterLink}
+              to={currentRun ? `/payroll/history/${month}` : '/payroll/run'}
+              variant="contained"
+              startIcon={<PlayCircleIcon />}
+            >
+              {currentRun ? 'View payroll' : 'Run payroll'}
+            </Button>
+          </>
+        }
+      />
 
       {business.onboarding_step === 2 && (
         <Alert
@@ -115,69 +138,85 @@ export const Dashboard = () => {
       )}
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
-        <Card>
-          <CardContent>
-            <Typography variant="overline" color="text.secondary">
-              Total Employees
-            </Typography>
-            <Typography variant="h4">{employees.length}</Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <Typography variant="overline" color="text.secondary">
-              Last Net Payroll
-            </Typography>
-            <Typography variant="h4" className="money">
-              {formatMoney(latestNet)}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <Typography variant="overline" color="text.secondary">
-              Current Month
-            </Typography>
-            <Typography variant="h4">{formatMonth(month)}</Typography>
-            <Chip
-              label={currentRun ? 'Completed' : 'Ready'}
-              color={currentRun ? 'success' : 'primary'}
-              sx={{ mt: 1 }}
-            />
-          </CardContent>
-        </Card>
+        <StatCard label="Team size" value={employees.length} helper="Active payroll records" icon={<GroupsIcon />} />
+        <StatCard
+          label="Last net payroll"
+          value={<Box component="span" className="money">{formatMoney(latestNet)}</Box>}
+          helper={history[0] ? history[0].month_display : 'No confirmed run yet'}
+          icon={<AccountBalanceWalletIcon />}
+          tone="green"
+        />
+        <StatCard
+          label="Current month"
+          value={formatMonth(month)}
+          helper={<Chip label={currentRun ? 'Completed' : 'Ready to run'} color={currentRun ? 'success' : 'primary'} size="small" />}
+          icon={<CalendarMonthIcon />}
+          tone={currentRun ? 'green' : 'amber'}
+        />
       </Box>
 
       {employees.length === 0 ? (
-        <Card>
-          <CardContent>
-            <Box sx={{ textAlign: 'center', py: 5 }}>
-              <GroupAddIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="h6">No employees yet</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Add your first employee to start running payroll.
-              </Typography>
-              <Button component={RouterLink} to="/employees/new" variant="contained">
+        <EmptyState
+          icon={<GroupAddIcon fontSize="large" />}
+          title="No employees yet"
+          description="Add your first employee to unlock payroll runs, history, and exportable reports."
+          action={
+            <Button component={RouterLink} to="/employees/new" variant="contained" startIcon={<GroupAddIcon />}>
                 Add First Employee
               </Button>
-            </Box>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'center' } }}>
-          <Fab
-            component={RouterLink}
-            to={currentRun ? `/payroll/history/${month}` : '/payroll/run'}
-            variant="extended"
-            color="primary"
-          >
-            <PlayCircleIcon />
-            {currentRun ? `View ${formatMonth(month)} Payroll` : `Run Payroll - ${formatMonth(month)}`}
-          </Fab>
-          <Button component={RouterLink} to="/employees" variant="outlined">
-            Manage Employees
-          </Button>
-        </Stack>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.35fr 1fr' }, gap: 2 }}>
+          <Card>
+            <CardContent sx={{ p: 3 }}>
+              <Stack spacing={2}>
+                <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                  <TaskAltIcon color="primary" />
+                  <Box>
+                    <Typography variant="h6">Next payroll action</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {currentRun ? `${formatMonth(month)} is complete.` : `${formatMonth(month)} is ready for inputs.`}
+                    </Typography>
+                  </Box>
+                </Stack>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
+                  <Button
+                    component={RouterLink}
+                    to={currentRun ? `/payroll/history/${month}` : '/payroll/run'}
+                    variant="contained"
+                    endIcon={<ArrowForwardIcon />}
+                  >
+                    {currentRun ? `View ${formatMonth(month)} payroll` : `Run ${formatMonth(month)} payroll`}
+                  </Button>
+                  <Button component={RouterLink} to="/employees" variant="outlined">
+                    Manage employees
+                  </Button>
+                </Stack>
+              </Stack>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent sx={{ p: 3 }}>
+              <Stack spacing={1.25}>
+                <Typography variant="h6">Recent activity</Typography>
+                {history.slice(0, 3).map((run) => (
+                  <Stack key={run.id} direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
+                    <Typography variant="body2">{run.month_display}</Typography>
+                    <Typography variant="body2" className="money" sx={{ fontWeight: 700 }}>
+                      {formatMoney(run.total_net)}
+                    </Typography>
+                  </Stack>
+                ))}
+                {history.length === 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    Confirm your first payroll to see activity here.
+                  </Typography>
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
+        </Box>
       )}
 
       <Dialog open={companyDialogOpen} maxWidth="sm" fullWidth>

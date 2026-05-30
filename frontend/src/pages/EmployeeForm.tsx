@@ -19,11 +19,16 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import PersonIcon from '@mui/icons-material/Person';
 import type { EmployeeInput, Gender } from '../types';
 import { addEmployee, getEmployee, getEmployees, updateEmployee, updateOnboardingStep } from '../lib/payrunApi';
 import { formatMoney } from '../utils/format';
 import { useWorkspace } from '../hooks/useWorkspace';
+import { PageHeader } from '../components/PageHeader';
+import { StatCard } from '../components/StatCard';
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -160,13 +165,24 @@ export const EmployeeForm = () => {
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4">{isEdit ? 'Edit Employee' : 'Add Employee'}</Typography>
-        <Typography color="text.secondary">Salary components and compliance toggles feed payroll calculations.</Typography>
+      <PageHeader
+        title={isEdit ? 'Edit employee' : 'Add employee'}
+        subtitle="Salary components and compliance toggles feed monthly payroll calculations."
+        actions={
+          <Button variant="outlined" onClick={() => navigate('/employees')}>
+            Cancel
+          </Button>
+        }
+      />
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+        <StatCard label="Gross estimate" value={<Box component="span" className="money">{formatMoney(grossSalary)}</Box>} helper="Basic + HRA + allowance" icon={<PaymentsIcon />} />
+        <StatCard label="HRA" value={<Box component="span" className="money">{formatMoney(form.hra)}</Box>} helper="Auto-set to 50 percent" icon={<AccountBalanceIcon />} tone="slate" />
+        <StatCard label="ESI status" value={form.esi_applicable ? 'Applicable' : 'Not applicable'} helper="Based on gross salary" icon={<InfoOutlinedIcon />} tone={form.esi_applicable ? 'green' : 'amber'} />
       </Box>
 
       <Card>
-        <CardContent>
+        <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
           <Stack spacing={2.5}>
             {formError && <Alert severity="error">{formError}</Alert>}
             {isEdit && <Alert severity="warning">Salary changes affect the next payroll run, not already confirmed runs.</Alert>}
@@ -174,6 +190,10 @@ export const EmployeeForm = () => {
               PayRun is designed for small teams. PF and ESI are voluntary benefits at this size, not legal requirements.
             </Alert>
 
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+              <PersonIcon color="primary" />
+              <Typography variant="h6">Employee profile</Typography>
+            </Stack>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
               <TextField label="Full Name" required value={form.name} onChange={(event) => updateField('name', event.target.value)} />
               <TextField label="Role" required value={form.role} onChange={(event) => updateField('role', event.target.value)} />
@@ -231,6 +251,10 @@ export const EmployeeForm = () => {
               </FormControl>
             </Box>
 
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', pt: 1 }}>
+              <AccountBalanceIcon color="primary" />
+              <Typography variant="h6">Compliance and bank details</Typography>
+            </Stack>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 2 }}>
               <TextField label="PAN" value={form.pan ?? ''} onChange={(event) => updateField('pan', event.target.value)} />
               <TextField
@@ -281,16 +305,9 @@ export const EmployeeForm = () => {
               </Stack>
             </Stack>
 
-            <Typography variant="subtitle1">
-              Gross salary estimate: <Box component="span" className="money">{formatMoney(grossSalary)}</Box>
-            </Typography>
-
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
               <Button variant="contained" disabled={saving} onClick={saveEmployee}>
                 {saving ? 'Saving...' : 'Save Employee'}
-              </Button>
-              <Button variant="outlined" onClick={() => navigate('/employees')}>
-                Cancel
               </Button>
             </Stack>
           </Stack>

@@ -52,7 +52,7 @@ export const ResetPassword = () => {
 
   return (
     <Box sx={{ minHeight: 'calc(100vh - 120px)', display: 'grid', placeItems: 'center' }}>
-      <Paper sx={{ p: { xs: 3, sm: 4 }, width: '100%', maxWidth: 440 }}>
+      <Paper sx={{ p: { xs: 3, sm: 4 }, width: '100%', maxWidth: 460, border: '1px solid #DDE5EE', borderRadius: 2 }}>
         <Stack spacing={2.25}>
           <Typography variant="h5">Set a new password</Typography>
           {!ready && (
@@ -76,10 +76,10 @@ export const ResetPassword = () => {
             onChange={(event) => setConfirmPassword(event.target.value)}
           />
           <Button variant="contained" disabled={loading || !ready} onClick={updatePassword}>
-            {loading ? 'Saving...' : 'Set New Password'}
+            {loading ? 'Saving...' : 'Set new password'}
           </Button>
           <Button variant="text" onClick={() => navigate('/forgot-password')}>
-            Send New Link
+            Send new link
           </Button>
         </Stack>
       </Paper>

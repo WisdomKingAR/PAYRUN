@@ -22,7 +22,7 @@ export const ForgotPassword = () => {
 
   return (
     <Box sx={{ minHeight: 'calc(100vh - 120px)', display: 'grid', placeItems: 'center' }}>
-      <Paper sx={{ p: { xs: 3, sm: 4 }, width: '100%', maxWidth: 440 }}>
+      <Paper sx={{ p: { xs: 3, sm: 4 }, width: '100%', maxWidth: 460, border: '1px solid #DDE5EE', borderRadius: 2 }}>
         <Stack spacing={2.25}>
           <Typography variant="h5">Reset your password</Typography>
           <Typography variant="body2" color="text.secondary">
@@ -37,7 +37,7 @@ export const ForgotPassword = () => {
             onChange={(event) => setEmail(event.target.value)}
           />
           <Button variant="contained" disabled={loading || !email.trim()} onClick={sendResetLink}>
-            {loading ? 'Sending...' : 'Send Reset Link'}
+            {loading ? 'Sending...' : 'Send reset link'}
           </Button>
           <Link component={RouterLink} to="/login">
             Back to login

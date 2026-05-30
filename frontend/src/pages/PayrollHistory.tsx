@@ -16,11 +16,18 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import HistoryIcon from '@mui/icons-material/History';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import type { PayrollRun } from '../types';
 import { getPayrollHistory } from '../lib/payrunApi';
 import { formatMoney } from '../utils/format';
 import { useWorkspace } from '../hooks/useWorkspace';
+import { EmptyState } from '../components/EmptyState';
+import { PageHeader } from '../components/PageHeader';
+import { StatCard } from '../components/StatCard';
 
 export const PayrollHistory = () => {
   const { month } = useParams();
@@ -43,41 +50,22 @@ export const PayrollHistory = () => {
 
     return (
       <Stack spacing={3}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="h4">{selectedRun.month_display}</Typography>
-            <Typography color="text.secondary">Confirmed payroll breakdown.</Typography>
-          </Box>
-          <Button component={RouterLink} to="/payroll/history" variant="outlined">
+        <PageHeader
+          eyebrow="Confirmed run"
+          title={selectedRun.month_display}
+          subtitle="Payroll totals and employee-level payout details for this closed month."
+          actions={
+            <Button component={RouterLink} to="/payroll/history" variant="outlined" startIcon={<ArrowBackIcon />}>
             Back to History
           </Button>
-        </Stack>
+          }
+        />
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 2 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="overline">Total Gross</Typography>
-              <Typography variant="h5" className="money">{formatMoney(selectedRun.total_gross)}</Typography>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent>
-              <Typography variant="overline">Total Net</Typography>
-              <Typography variant="h5" className="money" color="primary">{formatMoney(selectedRun.total_net)}</Typography>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent>
-              <Typography variant="overline">Employees</Typography>
-              <Typography variant="h5">{selectedRun.employee_count}</Typography>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent>
-              <Typography variant="overline">Professional Tax</Typography>
-              <Typography variant="h5" className="money">{formatMoney(selectedRun.total_professional_tax)}</Typography>
-            </CardContent>
-          </Card>
+          <StatCard label="Total gross" value={<Box component="span" className="money">{formatMoney(selectedRun.total_gross)}</Box>} icon={<RequestQuoteIcon />} />
+          <StatCard label="Total net" value={<Box component="span" className="money">{formatMoney(selectedRun.total_net)}</Box>} icon={<PaymentsIcon />} tone="green" />
+          <StatCard label="Employees" value={selectedRun.employee_count} helper="Included in this run" icon={<ReceiptLongIcon />} tone="slate" />
+          <StatCard label="Professional tax" value={<Box component="span" className="money">{formatMoney(selectedRun.total_professional_tax)}</Box>} icon={<HistoryIcon />} tone="amber" />
         </Box>
 
         <TableContainer component={Card}>
@@ -111,23 +99,14 @@ export const PayrollHistory = () => {
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4">Payroll History</Typography>
-        <Typography color="text.secondary">Completed payroll runs appear here.</Typography>
-      </Box>
+      <PageHeader title="Payroll history" subtitle="Review completed payroll runs, totals, and employee-level payout records." />
 
       {history.length === 0 ? (
-        <Card>
-          <CardContent>
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <HistoryIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="h6">No payroll history yet</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Your completed runs will appear after the first payroll.
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<HistoryIcon fontSize="large" />}
+          title="No payroll history yet"
+          description="Confirmed payroll runs will appear here with totals, deductions, and employee payouts."
+        />
       ) : (
         <Stack spacing={1.5}>
           {history.map((run) => (

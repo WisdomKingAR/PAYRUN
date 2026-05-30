@@ -3,78 +3,91 @@ import { createTheme } from '@mui/material/styles';
 export const payrunTheme = createTheme({
   palette: {
     primary: {
-      main: '#1565C0',
-      light: '#5E92F3',
-      dark: '#003C8F',
+      main: '#0F5EA8',
+      light: '#D9EAFB',
+      dark: '#083E73',
       contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#546E7A',
-      light: '#819CA9',
-      dark: '#29434E',
+      main: '#526172',
+      light: '#D8DEE7',
+      dark: '#2D3744',
       contrastText: '#FFFFFF',
     },
     success: {
-      main: '#2E7D32',
-      light: '#60AD5E',
-      dark: '#005005',
+      main: '#1E6B3F',
+      light: '#DDF4E7',
+      dark: '#114528',
       contrastText: '#FFFFFF',
     },
     error: {
-      main: '#D32F2F',
-      light: '#FF6659',
-      dark: '#9A0007',
+      main: '#C62828',
+      light: '#FDE4E4',
+      dark: '#8E1515',
       contrastText: '#FFFFFF',
     },
-    warning: { main: '#F57F17', contrastText: '#FFFFFF' },
-    background: { default: '#F5F7FA', paper: '#FFFFFF' },
-    text: { primary: '#1A1C1E', secondary: '#43474E', disabled: '#74777F' },
-    divider: '#ECEFF1',
+    warning: { main: '#B7791F', light: '#FFF5E1', contrastText: '#FFFFFF' },
+    info: { main: '#0B6B8F', light: '#E5F7FC', contrastText: '#FFFFFF' },
+    background: { default: '#EEF3F8', paper: '#FFFFFF' },
+    text: { primary: '#13202E', secondary: '#526172', disabled: '#8A97A6' },
+    divider: '#DDE5EE',
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h4: { fontSize: '2rem', fontWeight: 700, letterSpacing: 0 },
-    h5: { fontSize: '1.5rem', fontWeight: 600, letterSpacing: 0 },
-    h6: { fontSize: '1.25rem', fontWeight: 600 },
+    fontFamily: 'Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    h4: { fontSize: '1.85rem', fontWeight: 750, letterSpacing: 0, lineHeight: 1.18 },
+    h5: { fontSize: '1.35rem', fontWeight: 700, letterSpacing: 0, lineHeight: 1.2 },
+    h6: { fontSize: '1.08rem', fontWeight: 700 },
     subtitle1: { fontSize: '1rem', fontWeight: 500 },
     subtitle2: { fontSize: '0.875rem', fontWeight: 600 },
     body1: { fontSize: '1rem', fontWeight: 400 },
     body2: { fontSize: '0.875rem', fontWeight: 400 },
     caption: { fontSize: '0.75rem', fontWeight: 400 },
-    overline: { fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em' },
+    overline: { fontSize: '0.68rem', fontWeight: 750, letterSpacing: '0.08em' },
   },
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: 8 },
   components: {
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
-          boxShadow: '0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)',
+          borderRadius: 8,
+          border: '1px solid #DDE5EE',
+          boxShadow: '0 10px 26px rgba(15, 34, 54, 0.06)',
+          backgroundImage: 'none',
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
         },
       },
     },
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 100,
+          borderRadius: 8,
           textTransform: 'none',
-          fontWeight: 500,
-          paddingLeft: 24,
-          paddingRight: 24,
+          fontWeight: 700,
+          paddingLeft: 18,
+          paddingRight: 18,
         },
         contained: {
           boxShadow: 'none',
-          '&:hover': { boxShadow: '0px 1px 3px rgba(0,0,0,0.24)' },
+          '&:hover': { boxShadow: '0 8px 18px rgba(15, 94, 168, 0.18)' },
+        },
+        outlined: {
+          borderColor: '#B9C7D6',
         },
       },
     },
     MuiFab: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
+          borderRadius: 8,
           textTransform: 'none',
-          fontWeight: 500,
-          boxShadow: '0px 10px 20px rgba(0,0,0,0.19), 0px 6px 6px rgba(0,0,0,0.23)',
+          fontWeight: 700,
+          boxShadow: '0 14px 30px rgba(15, 94, 168, 0.22)',
         },
         extended: {
           height: 56,
@@ -91,8 +104,9 @@ export const payrunTheme = createTheme({
         root: {
           '& .MuiOutlinedInput-root': {
             borderRadius: 8,
+            backgroundColor: '#FFFFFF',
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#1565C0',
+              borderColor: '#0F5EA8',
               borderWidth: 2,
             },
           },
@@ -101,37 +115,37 @@ export const payrunTheme = createTheme({
     },
     MuiChip: {
       styleOverrides: {
-        root: { borderRadius: 8, fontWeight: 500, fontSize: '0.75rem', height: 28 },
+        root: { borderRadius: 6, fontWeight: 700, fontSize: '0.72rem', height: 26 },
       },
     },
     MuiTableHead: {
       styleOverrides: {
         root: {
           '& .MuiTableCell-head': {
-            background: '#F5F7FA',
-            color: '#43474E',
-            fontWeight: 600,
+            background: '#F6F9FC',
+            color: '#526172',
+            fontWeight: 800,
             fontSize: '0.7rem',
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
-            borderBottom: '2px solid #ECEFF1',
+            borderBottom: '1px solid #DDE5EE',
           },
         },
       },
     },
     MuiTableRow: {
       styleOverrides: {
-        root: { '&:hover': { background: '#F5F7FA' } },
+        root: { '&:hover': { background: '#F8FBFD' } },
       },
     },
     MuiTableCell: {
       styleOverrides: {
-        root: { borderBottom: '1px solid #ECEFF1', padding: '12px 16px' },
+        root: { borderBottom: '1px solid #E6EDF4', padding: '11px 14px' },
       },
     },
     MuiDialog: {
       styleOverrides: {
-        paper: { borderRadius: 28, padding: 8 },
+        paper: { borderRadius: 10, padding: 8 },
       },
     },
     MuiSnackbar: {
@@ -142,8 +156,9 @@ export const payrunTheme = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: '#FFFFFF',
-          color: '#1A1C1E',
-          boxShadow: '0px 1px 3px rgba(0,0,0,0.12)',
+          color: '#13202E',
+          borderBottom: '1px solid #DDE5EE',
+          boxShadow: '0 6px 18px rgba(15, 34, 54, 0.05)',
         },
       },
     },
@@ -151,9 +166,25 @@ export const payrunTheme = createTheme({
       styleOverrides: {
         switchBase: {
           '&.Mui-checked': {
-            color: '#1565C0',
-            '& + .MuiSwitch-track': { backgroundColor: '#1565C0', opacity: 0.7 },
+            color: '#0F5EA8',
+            '& + .MuiSwitch-track': { backgroundColor: '#0F5EA8', opacity: 0.7 },
           },
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        indicator: {
+          height: 3,
+          borderRadius: 4,
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 750,
         },
       },
     },

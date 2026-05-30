@@ -48,17 +48,7 @@ export const ScrollMemory = () => {
     let settled = false;
     let rafId = 0;
 
-    const tryRestore = () => {
-      if (settled) return;
-      window.scrollTo(position.x, position.y);
-      const closeEnough = Math.abs(window.scrollY - position.y) < 8;
-      if (closeEnough) { settled = true; observer.disconnect(); }
-    };
-
-    // Attempt immediately
-    tryRestore();
-
-    // Watch for DOM changes that may grow the page height (e.g. async form content loading)
+    // Create observer first so tryRestore can reference it
     const observer = new MutationObserver(() => {
       const tallEnough = document.documentElement.scrollHeight >= position.y + window.innerHeight;
       if (tallEnough && !settled) {
@@ -67,7 +57,18 @@ export const ScrollMemory = () => {
       }
     });
 
+    const tryRestore = () => {
+      if (settled) return;
+      window.scrollTo(position.x, position.y);
+      const closeEnough = Math.abs(window.scrollY - position.y) < 8;
+      if (closeEnough) { settled = true; observer.disconnect(); }
+    };
+
+    // Start observing DOM changes (e.g. async form content loading)
     observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+
+    // Attempt restore immediately
+    tryRestore();
 
     // Safety timeout — give up after 8 seconds
     const safetyTimeout = window.setTimeout(() => {

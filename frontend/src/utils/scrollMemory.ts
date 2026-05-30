@@ -1,5 +1,6 @@
 const storagePrefix = 'payrun-scroll';
 const restoredRoutes = ['/dashboard', '/employees', '/payroll/run', '/payroll/history', '/settings'];
+const lastKnownPositions = new Map<string, { x: number; y: number }>();
 
 export const shouldRestoreRoute = (pathname: string) =>
   restoredRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
@@ -7,6 +8,9 @@ export const shouldRestoreRoute = (pathname: string) =>
 export const getScrollKey = (pathname: string, search: string) => `${storagePrefix}:${pathname}${search}`;
 
 export const readScrollPosition = (key: string) => {
+  const cached = lastKnownPositions.get(key);
+  if (cached) return cached;
+
   const stored = window.sessionStorage.getItem(key);
   if (!stored) return null;
 
@@ -24,11 +28,15 @@ export const readScrollPosition = (key: string) => {
 export const saveCurrentScrollPosition = (pathname: string, search = '') => {
   if (!shouldRestoreRoute(pathname)) return;
 
+  const key = getScrollKey(pathname, search);
+  const position = {
+    x: window.scrollX,
+    y: window.scrollY,
+  };
+
+  lastKnownPositions.set(key, position);
   window.sessionStorage.setItem(
-    getScrollKey(pathname, search),
-    JSON.stringify({
-      x: window.scrollX,
-      y: window.scrollY,
-    }),
+    key,
+    JSON.stringify(position),
   );
 };

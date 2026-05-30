@@ -8,6 +8,15 @@ export const ScrollMemory = () => {
   const shouldRestore = shouldRestoreRoute(location.pathname);
 
   useEffect(() => {
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
+
+    return () => {
+      window.history.scrollRestoration = previous;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!shouldRestore) return undefined;
 
     let frame = 0;
@@ -21,7 +30,6 @@ export const ScrollMemory = () => {
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener('scroll', savePosition);
-      saveCurrentScrollPosition(location.pathname, location.search);
     };
   }, [location.pathname, location.search, shouldRestore]);
 
@@ -37,11 +45,24 @@ export const ScrollMemory = () => {
       return undefined;
     }
 
-    const timers = [0, 50, 150, 350, 700, 1200].map((delay) =>
-      window.setTimeout(() => window.scrollTo(position.x, position.y), delay),
-    );
+    let attempts = 0;
+    let timeout = 0;
 
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
+    const restorePosition = () => {
+      attempts += 1;
+      window.scrollTo(position.x, position.y);
+
+      const canReachPosition = document.documentElement.scrollHeight >= position.y + window.innerHeight;
+      const closeEnough = Math.abs(window.scrollY - position.y) < 8;
+
+      if ((canReachPosition && closeEnough) || attempts >= 45) return;
+
+      timeout = window.setTimeout(restorePosition, 100);
+    };
+
+    timeout = window.setTimeout(restorePosition, 0);
+
+    return () => window.clearTimeout(timeout);
   }, [scrollKey, shouldRestore]);
 
   return null;

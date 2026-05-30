@@ -15,148 +15,7 @@ import {
 import { getEmployees, getPayrollHistory, updateBusiness } from '../lib/payrunApi';
 import { supabase } from '../lib/supabaseClient';
 import { useWorkspace } from '../hooks/useWorkspace';
-import type { Employee, PayrollRun } from '../types';
-
-type ExportCell = string | number | boolean | null | undefined;
-
-const escapeExcelCell = (value: ExportCell) =>
-  String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-
-const buildExcelTable = (title: string, headers: string[], rows: ExportCell[][]) => `
-  <h2>${escapeExcelCell(title)}</h2>
-  <table>
-    <thead>
-      <tr>${headers.map((header) => `<th>${escapeExcelCell(header)}</th>`).join('')}</tr>
-    </thead>
-    <tbody>
-      ${rows
-        .map((row) => `<tr>${row.map((cell) => `<td>${escapeExcelCell(cell)}</td>`).join('')}</tr>`)
-        .join('')}
-    </tbody>
-  </table>
-`;
-
-const buildExcelExport = (business: { name: string; state: string }, employees: Employee[], payrollHistory: PayrollRun[]) => {
-  const payrollRows = payrollHistory.flatMap((run) =>
-    (run.employee_payroll ?? []).map((row) => [
-      run.month_display,
-      row.employee_name,
-      row.role,
-      row.days_present,
-      row.paid_leaves,
-      row.unpaid_leaves,
-      row.overtime_hours,
-      row.bonus,
-      row.gross_salary,
-      row.total_deductions,
-      row.net_salary,
-      row.professional_tax,
-      row.pf_employee,
-      row.pf_employer,
-      row.esi_employee,
-      row.esi_employer,
-    ]),
-  );
-
-  return `
-    <!doctype html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <style>
-          body { font-family: Arial, sans-serif; }
-          h1, h2 { color: #1565c0; }
-          table { border-collapse: collapse; margin-bottom: 24px; }
-          th, td { border: 1px solid #b0bec5; padding: 8px; }
-          th { background: #e3f2fd; font-weight: 700; }
-        </style>
-      </head>
-      <body>
-        <h1>PayRun Export</h1>
-        ${buildExcelTable('Business Profile', ['Field', 'Value'], [
-          ['Business Name', business.name],
-          ['State', business.state],
-          ['Exported On', new Date().toLocaleString()],
-        ])}
-        ${buildExcelTable(
-          'Employees',
-          [
-            'Name',
-            'Role',
-            'Email',
-            'Phone',
-            'Joining Date',
-            'Basic Salary',
-            'HRA',
-            'Special Allowance',
-            'Gross Salary',
-            'PF Applicable',
-            'ESI Applicable',
-            'Gender',
-            'Status',
-          ],
-          employees.map((employee) => [
-            employee.name,
-            employee.role,
-            employee.email,
-            employee.phone_number,
-            employee.joining_date,
-            employee.basic_salary,
-            employee.hra,
-            employee.special_allowance,
-            employee.gross_salary,
-            employee.pf_applicable,
-            employee.esi_applicable,
-            employee.gender,
-            employee.is_active ? 'Active' : 'Inactive',
-          ]),
-        )}
-        ${buildExcelTable(
-          'Payroll Summary',
-          ['Month', 'Status', 'Employees', 'Total Gross', 'Total Net', 'PF Employee', 'PF Employer', 'ESI Employee', 'ESI Employer', 'Professional Tax'],
-          payrollHistory.map((run) => [
-            run.month_display,
-            run.status,
-            run.employee_count,
-            run.total_gross,
-            run.total_net,
-            run.total_pf_employee,
-            run.total_pf_employer,
-            run.total_esi_employee,
-            run.total_esi_employer,
-            run.total_professional_tax,
-          ]),
-        )}
-        ${buildExcelTable(
-          'Employee Payroll Details',
-          [
-            'Month',
-            'Employee',
-            'Role',
-            'Days Present',
-            'Paid Leaves',
-            'Unpaid Leaves',
-            'Overtime Hours',
-            'Bonus',
-            'Gross Salary',
-            'Total Deductions',
-            'Net Salary',
-            'Professional Tax',
-            'PF Employee',
-            'PF Employer',
-            'ESI Employee',
-            'ESI Employer',
-          ],
-          payrollRows,
-        )}
-      </body>
-    </html>
-  `;
-};
+import { createXlsxBlob } from '../utils/xlsxExport';
 
 export const Settings = () => {
   const { business, loading, error, refresh } = useWorkspace();
@@ -219,12 +78,123 @@ export const Settings = () => {
     if (!business) return;
 
     const [employees, payrollHistory] = await Promise.all([getEmployees(business.id), getPayrollHistory(business.id)]);
-    const workbook = buildExcelExport(business, employees, payrollHistory);
-    const blob = new Blob([workbook], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const payrollRows = payrollHistory.flatMap((run) =>
+      (run.employee_payroll ?? []).map((row) => [
+        run.month_display,
+        row.employee_name,
+        row.role,
+        row.days_present,
+        row.paid_leaves,
+        row.unpaid_leaves,
+        row.overtime_hours,
+        row.bonus,
+        row.gross_salary,
+        row.total_deductions,
+        row.net_salary,
+        row.professional_tax,
+        row.pf_employee,
+        row.pf_employer,
+        row.esi_employee,
+        row.esi_employer,
+      ]),
+    );
+    const blob = createXlsxBlob([
+      {
+        name: 'Business Profile',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['Business Name', business.name],
+          ['State', business.state],
+          ['Exported On', new Date().toLocaleString()],
+        ],
+      },
+      {
+        name: 'Employees',
+        headers: [
+          'Name',
+          'Role',
+          'Email',
+          'Phone',
+          'Joining Date',
+          'Basic Salary',
+          'HRA',
+          'Special Allowance',
+          'Gross Salary',
+          'PF Applicable',
+          'ESI Applicable',
+          'Gender',
+          'Status',
+        ],
+        rows: employees.map((employee) => [
+          employee.name,
+          employee.role,
+          employee.email,
+          employee.phone_number,
+          employee.joining_date,
+          employee.basic_salary,
+          employee.hra,
+          employee.special_allowance,
+          employee.gross_salary,
+          employee.pf_applicable,
+          employee.esi_applicable,
+          employee.gender,
+          employee.is_active ? 'Active' : 'Inactive',
+        ]),
+      },
+      {
+        name: 'Payroll Summary',
+        headers: [
+          'Month',
+          'Status',
+          'Employees',
+          'Total Gross',
+          'Total Net',
+          'PF Employee',
+          'PF Employer',
+          'ESI Employee',
+          'ESI Employer',
+          'Professional Tax',
+        ],
+        rows: payrollHistory.map((run) => [
+          run.month_display,
+          run.status,
+          run.employee_count,
+          run.total_gross,
+          run.total_net,
+          run.total_pf_employee,
+          run.total_pf_employer,
+          run.total_esi_employee,
+          run.total_esi_employer,
+          run.total_professional_tax,
+        ]),
+      },
+      {
+        name: 'Employee Payroll',
+        headers: [
+          'Month',
+          'Employee',
+          'Role',
+          'Days Present',
+          'Paid Leaves',
+          'Unpaid Leaves',
+          'Overtime Hours',
+          'Bonus',
+          'Gross Salary',
+          'Total Deductions',
+          'Net Salary',
+          'Professional Tax',
+          'PF Employee',
+          'PF Employer',
+          'ESI Employee',
+          'ESI Employer',
+        ],
+        rows: payrollRows,
+      },
+    ]);
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `payrun-export-${new Date().toISOString().slice(0, 10)}.xls`;
+    anchor.download = `payrun-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
     anchor.click();
     URL.revokeObjectURL(url);
   };

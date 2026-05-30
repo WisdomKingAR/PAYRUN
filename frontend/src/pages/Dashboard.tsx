@@ -87,7 +87,7 @@ export const Dashboard = () => {
         </Alert>
         <Alert severity="info">
           If this mentions RLS, missing columns, or relation not found, run the latest Supabase SQL in
-          codes/backend/setup.sql and refresh this page.
+          backend/setup.sql and refresh this page.
         </Alert>
       </Stack>
     );

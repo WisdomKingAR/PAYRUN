@@ -4,19 +4,18 @@ PayRun is a React, TypeScript, MUI, and Supabase payroll MVP for small Indian te
 
 ## Structure
 
-- `codes/frontend` contains the Vite React frontend.
-- `codes/backend` contains Supabase SQL setup and repair scripts.
-- `codes/README.md` contains the original codebase notes.
+- `frontend` contains the Vite React frontend.
+- `backend` contains Supabase SQL setup and repair scripts.
 
 ## Local Setup
 
 ```powershell
-cd codes/frontend
+cd frontend
 npm install
 npm run dev
 ```
 
-Create a frontend environment file from `codes/frontend/.env.example` and set:
+Create a frontend environment file from `frontend/.env.example` and set:
 
 ```text
 VITE_SUPABASE_URL=your_project_url
@@ -25,4 +24,4 @@ VITE_SUPABASE_ANON_KEY=your_anon_public_key
 
 ## Supabase
 
-Run the SQL scripts in `codes/backend` inside the Supabase SQL Editor before testing the app with real auth and payroll data.
+Run the SQL scripts in `backend` inside the Supabase SQL Editor before testing the app with real auth and payroll data.

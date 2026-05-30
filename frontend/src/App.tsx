@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
 import { useAuthStore } from './store/useAuthStore';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ScrollMemory } from './components/ScrollMemory';
 import { AppLayout } from './layouts/AppLayout';
 import { Auth } from './pages/Auth';
 import { Dashboard } from './pages/Dashboard';
@@ -37,6 +38,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ScrollMemory />
       <AppLayout>
         <Routes>
           <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Landing />} />

@@ -25,6 +25,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { useTheme } from '@mui/material/styles';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { saveCurrentScrollPosition } from '../utils/scrollMemory';
 
 const drawerWidth = 240;
 
@@ -49,6 +50,14 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
     navigate('/login', { replace: true });
   };
 
+  const handleNavigation = (path: string) => {
+    saveCurrentScrollPosition(location.pathname, location.search);
+
+    if (location.pathname !== path) {
+      navigate(path);
+    }
+  };
+
   const handleBrandClick = async () => {
     if (user) {
       await signOut();
@@ -65,7 +74,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
           <ListItemButton
             key={item.path}
             selected={selected}
-            onClick={() => navigate(item.path)}
+            onClick={() => handleNavigation(item.path)}
             sx={{
               borderRadius: 2,
               mb: 0.75,
@@ -163,7 +172,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
         <BottomNavigation
           showLabels
           value={activePath}
-          onChange={(_, value: string) => navigate(value)}
+          onChange={(_, value: string) => handleNavigation(value)}
           sx={{
             position: 'fixed',
             left: 0,

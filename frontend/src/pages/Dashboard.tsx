@@ -56,6 +56,9 @@ export const Dashboard = () => {
 
   const currentRun = useMemo(() => history.find((run) => run.month === month), [history, month]);
   const latestNet = history[0]?.total_net ?? 0;
+  const needsPayrollAmendment = Boolean(currentRun && currentRun.employee_count !== employees.length);
+  const primaryPayrollPath = currentRun && !needsPayrollAmendment ? `/payroll/history/${month}` : '/payroll/run';
+  const primaryPayrollLabel = currentRun ? (needsPayrollAmendment ? 'Amend payroll' : 'View payroll') : 'Run payroll';
 
   const saveCompany = async () => {
     if (!business || companyName.trim().length < 2) return;
@@ -114,11 +117,11 @@ export const Dashboard = () => {
             </Button>
             <Button
               component={RouterLink}
-              to={currentRun ? `/payroll/history/${month}` : '/payroll/run'}
+              to={primaryPayrollPath}
               variant="contained"
               startIcon={<PlayCircleIcon />}
             >
-              {currentRun ? 'View payroll' : 'Run payroll'}
+              {primaryPayrollLabel}
             </Button>
           </>
         }
@@ -149,9 +152,15 @@ export const Dashboard = () => {
         <StatCard
           label="Current month"
           value={formatMonth(month)}
-          helper={<Chip label={currentRun ? 'Completed' : 'Ready to run'} color={currentRun ? 'success' : 'primary'} size="small" />}
+          helper={
+            <Chip
+              label={needsPayrollAmendment ? 'Needs amendment' : currentRun ? 'Completed' : 'Ready to run'}
+              color={needsPayrollAmendment ? 'warning' : currentRun ? 'success' : 'primary'}
+              size="small"
+            />
+          }
           icon={<CalendarMonthIcon />}
-          tone={currentRun ? 'green' : 'amber'}
+          tone={currentRun && !needsPayrollAmendment ? 'green' : 'amber'}
         />
       </Box>
 
@@ -177,17 +186,22 @@ export const Dashboard = () => {
                     <Typography variant="h6">Next payroll action</Typography>
                     <Typography variant="body2" color="text.secondary">
                       {currentRun ? `${formatMonth(month)} is complete.` : `${formatMonth(month)} is ready for inputs.`}
+                      {needsPayrollAmendment && ' Your active employee list changed after confirmation.'}
                     </Typography>
                   </Box>
                 </Stack>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
                   <Button
                     component={RouterLink}
-                    to={currentRun ? `/payroll/history/${month}` : '/payroll/run'}
+                    to={primaryPayrollPath}
                     variant="contained"
                     endIcon={<ArrowForwardIcon />}
                   >
-                    {currentRun ? `View ${formatMonth(month)} payroll` : `Run ${formatMonth(month)} payroll`}
+                    {currentRun
+                      ? needsPayrollAmendment
+                        ? `Amend ${formatMonth(month)} payroll`
+                        : `View ${formatMonth(month)} payroll`
+                      : `Run ${formatMonth(month)} payroll`}
                   </Button>
                   <Button component={RouterLink} to="/employees" variant="outlined">
                     Manage employees

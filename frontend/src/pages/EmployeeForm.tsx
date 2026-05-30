@@ -185,7 +185,7 @@ export const EmployeeForm = () => {
         <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
           <Stack spacing={2.5}>
             {formError && <Alert severity="error">{formError}</Alert>}
-            {isEdit && <Alert severity="warning">Salary changes affect the next payroll run, not already confirmed runs.</Alert>}
+            {isEdit && <Alert severity="warning">Salary changes affect future payroll, and the current month only if you amend it.</Alert>}
             <Alert severity="info">
               PayRun is designed for small teams. PF and ESI are voluntary benefits at this size, not legal requirements.
             </Alert>

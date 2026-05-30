@@ -56,6 +56,7 @@ export const PayrollRun = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [isAmendingCompletedRun, setIsAmendingCompletedRun] = useState(false);
   const month = currentMonthKey();
 
   useEffect(() => {
@@ -64,6 +65,7 @@ export const PayrollRun = () => {
     Promise.all([getEmployees(business.id), getPayrollRun(business.id, month)])
       .then(([employeeRows, run]) => {
         setEmployees(employeeRows);
+        setIsAmendingCompletedRun(run?.status === 'completed');
 
         const nextInputs = Object.fromEntries(
           employeeRows.map((employee) => [employee.id, run?.draft_data?.[employee.id] ?? defaultInputsFor(employee, month)]),
@@ -75,7 +77,7 @@ export const PayrollRun = () => {
         if (run?.status === 'completed') {
           setMessage({
             type: 'info',
-            text: `${formatMonth(month)} payroll is already completed. Open history to view or amend it.`,
+            text: `${formatMonth(month)} payroll is already completed. Changes here will amend the saved payroll for this month.`,
           });
         }
       })
@@ -163,14 +165,23 @@ export const PayrollRun = () => {
   return (
     <Stack spacing={3}>
       <PageHeader
-        eyebrow={draftRestored ? 'Draft restored' : 'Current month'}
-        title={`Run payroll for ${formatMonth(month)}`}
-        subtitle="Enter attendance, leave, overtime, and bonus values. Net pay updates live before you confirm the run."
+        eyebrow={isAmendingCompletedRun ? 'Amending completed run' : draftRestored ? 'Draft restored' : 'Current month'}
+        title={`${isAmendingCompletedRun ? 'Amend' : 'Run'} payroll for ${formatMonth(month)}`}
+        subtitle={
+          isAmendingCompletedRun
+            ? 'This month was already confirmed. Update the inputs here to include new employees or corrected values.'
+            : 'Enter attendance, leave, overtime, and bonus values. Net pay updates live before you confirm the run.'
+        }
       />
 
       {business.state !== 'Maharashtra' && (
         <Alert severity="info">
           Professional Tax is currently supported for Maharashtra only. PT will show Rs. 0 for other states.
+        </Alert>
+      )}
+      {isAmendingCompletedRun && (
+        <Alert severity="warning">
+          Confirming again will replace the saved {formatMonth(month)} payroll totals and employee payout rows.
         </Alert>
       )}
       {draftRestored && <Alert severity="info">Draft restored from your last session.</Alert>}
@@ -279,16 +290,17 @@ export const PayrollRun = () => {
           {savingDraft ? 'Saving...' : 'Save draft'}
         </Button>
         <Button variant="contained" disabled={employees.length === 0 || hasInvalidRows} onClick={() => setConfirmOpen(true)} startIcon={<DoneAllIcon />}>
-          Confirm & Run Payroll
+          {isAmendingCompletedRun ? 'Update payroll' : 'Confirm & run payroll'}
         </Button>
       </Stack>
 
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Confirm Payroll Run</DialogTitle>
+        <DialogTitle>{isAmendingCompletedRun ? 'Update Payroll Run' : 'Confirm Payroll Run'}</DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
             <Typography>
-              You are about to run payroll for {formatMonth(month)} for {summary.employee_count} employees.
+              {isAmendingCompletedRun ? 'You are about to update' : 'You are about to run'} payroll for {formatMonth(month)} for{' '}
+              {summary.employee_count} employees.
             </Typography>
             <Typography className="money" sx={{ fontWeight: 700, color: 'primary.main' }}>
               Total net payable: {formatMoney(summary.total_net)}
@@ -299,7 +311,7 @@ export const PayrollRun = () => {
         <DialogActions>
           <Button onClick={() => setConfirmOpen(false)}>Go Back</Button>
           <Button variant="contained" disabled={saving} onClick={confirmRun}>
-            Confirm
+            {isAmendingCompletedRun ? 'Update payroll' : 'Confirm'}
           </Button>
         </DialogActions>
       </Dialog>

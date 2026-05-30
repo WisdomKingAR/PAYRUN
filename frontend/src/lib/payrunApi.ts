@@ -232,7 +232,16 @@ export async function savePayrollDraft(businessId: string, month: string, draftD
 
   if (existing) {
     if (existing.status === 'completed') {
-      throw new Error(`${formatMonth(month)} payroll is already completed. Open History to amend it.`);
+      const { error } = await supabase
+        .from('payroll_runs')
+        .update({
+          month_display: formatMonth(month),
+          draft_data: draftData,
+        })
+        .eq('id', existing.id);
+
+      if (error) throw error;
+      return;
     }
 
     const { error } = await supabase
@@ -280,10 +289,6 @@ export async function confirmPayrollRun(
   let payrollRunId: string;
 
   if (existing) {
-    if (existing.status === 'completed') {
-      throw new Error(`${formatMonth(month)} payroll is already completed. Open History to amend it.`);
-    }
-
     const { data: run, error: runError } = await supabase
       .from('payroll_runs')
       .update({

@@ -1,0 +1,20 @@
+html {
+  min-width: 375px;
+}
+
+body {
+  margin: 0;
+  background: #f5f7fa;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}
+
+.money {
+  font-family: 'Roboto Mono', Consolas, monospace;
+}

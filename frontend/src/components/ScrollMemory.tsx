@@ -45,24 +45,41 @@ export const ScrollMemory = () => {
       return undefined;
     }
 
-    let attempts = 0;
-    let timeout = 0;
+    let settled = false;
+    let rafId = 0;
 
-    const restorePosition = () => {
-      attempts += 1;
+    const tryRestore = () => {
+      if (settled) return;
       window.scrollTo(position.x, position.y);
-
-      const canReachPosition = document.documentElement.scrollHeight >= position.y + window.innerHeight;
       const closeEnough = Math.abs(window.scrollY - position.y) < 8;
-
-      if ((canReachPosition && closeEnough) || attempts >= 45) return;
-
-      timeout = window.setTimeout(restorePosition, 100);
+      if (closeEnough) { settled = true; observer.disconnect(); }
     };
 
-    timeout = window.setTimeout(restorePosition, 0);
+    // Attempt immediately
+    tryRestore();
 
-    return () => window.clearTimeout(timeout);
+    // Watch for DOM changes that may grow the page height (e.g. async form content loading)
+    const observer = new MutationObserver(() => {
+      const tallEnough = document.documentElement.scrollHeight >= position.y + window.innerHeight;
+      if (tallEnough && !settled) {
+        window.cancelAnimationFrame(rafId);
+        rafId = window.requestAnimationFrame(tryRestore);
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+
+    // Safety timeout — give up after 8 seconds
+    const safetyTimeout = window.setTimeout(() => {
+      if (!settled) { settled = true; observer.disconnect(); }
+    }, 8000);
+
+    return () => {
+      settled = true;
+      observer.disconnect();
+      window.cancelAnimationFrame(rafId);
+      window.clearTimeout(safetyTimeout);
+    };
   }, [scrollKey, shouldRestore]);
 
   return null;

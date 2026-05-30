@@ -5,33 +5,33 @@ import {
   Box,
   Button,
   Card,
+  CardContent,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   LinearProgress,
   Snackbar,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from '@mui/material';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import DescriptionIcon from '@mui/icons-material/Description';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import PercentIcon from '@mui/icons-material/Percent';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import SaveIcon from '@mui/icons-material/Save';
-import type { Employee, PayrollInputs } from '../types';
+import type { Employee, EmployeePayrollResult, PayrollInputs } from '../types';
 import { confirmPayrollRun, getEmployees, getPayrollRun, savePayrollDraft } from '../lib/payrunApi';
 import { calculateEmployeePayroll, calculateMaxDaysForEmployee, summarizePayroll } from '../utils/payrollCalculations';
 import { currentMonthKey, formatMoney, formatMonth } from '../utils/format';
 import { useWorkspace } from '../hooks/useWorkspace';
 import { getErrorMessage } from '../utils/errors';
+import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { StatCard } from '../components/StatCard';
 
@@ -44,6 +44,196 @@ const defaultInputsFor = (employee: Employee, month: string): PayrollInputs => {
     overtimeHours: 0,
     bonus: 0,
   };
+};
+
+interface PayrollNumberFieldProps {
+  label: string;
+  value: number;
+  error?: boolean;
+  helperText?: string;
+  max?: number;
+  min?: number;
+  readOnly?: boolean;
+  onChange: (value: number) => void;
+}
+
+const PayrollNumberField = ({ label, value, error, helperText, min = 0, max, readOnly = false, onChange }: PayrollNumberFieldProps) => (
+  <TextField
+    label={label}
+    type="number"
+    value={value}
+    error={error}
+    helperText={helperText}
+    slotProps={{ input: { readOnly }, htmlInput: { min, max } }}
+    onChange={(event) => onChange(Number(event.target.value))}
+    sx={{
+      minWidth: 118,
+      '& input': {
+        textAlign: 'right',
+        fontVariantNumeric: 'tabular-nums',
+      },
+    }}
+  />
+);
+
+interface PayrollEmployeeCardProps {
+  employee: Employee;
+  inputs: PayrollInputs;
+  result: EmployeePayrollResult;
+  maxDays: number;
+  invalidDays: boolean;
+  onInputChange: (key: keyof PayrollInputs, value: number) => void;
+}
+
+const PayrollEmployeeCard = ({
+  employee,
+  inputs,
+  result,
+  maxDays,
+  invalidDays,
+  onInputChange,
+}: PayrollEmployeeCardProps) => {
+  const initials = employee.name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+
+  return (
+    <Card>
+      <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
+        <Stack spacing={2.25}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={2}
+            sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between' }}
+          >
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', minWidth: 0 }}>
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 2,
+                  display: 'grid',
+                  placeItems: 'center',
+                  bgcolor: '#EAF3FF',
+                  color: 'primary.main',
+                  fontWeight: 800,
+                  flexShrink: 0,
+                }}
+              >
+                {initials || 'PR'}
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 750 }}>
+                  {employee.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {employee.role}
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+              <Chip size="small" label={`Max ${maxDays} days`} variant="outlined" />
+              <Chip size="small" label={employee.pf_applicable ? 'PF on' : 'PF off'} color={employee.pf_applicable ? 'primary' : 'default'} variant="outlined" />
+              <Chip size="small" label={employee.esi_applicable ? 'ESI on' : 'ESI off'} color={employee.esi_applicable ? 'success' : 'default'} variant="outlined" />
+            </Stack>
+          </Stack>
+
+          <Divider />
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 300px' },
+              gap: 2.5,
+              alignItems: 'stretch',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(5, minmax(0, 1fr))' },
+                gap: 1.5,
+              }}
+            >
+              <PayrollNumberField
+                label="Days present"
+                value={inputs.daysPresent}
+                max={maxDays}
+                error={invalidDays}
+                helperText={invalidDays ? `Max ${maxDays}` : undefined}
+                onChange={(value) => onInputChange('daysPresent', value)}
+              />
+              <PayrollNumberField
+                label="Paid leaves"
+                value={inputs.paidLeaves}
+                max={maxDays}
+                error={invalidDays}
+                helperText={invalidDays ? `Max ${maxDays}` : undefined}
+                onChange={(value) => onInputChange('paidLeaves', value)}
+              />
+              <PayrollNumberField
+                label="Unpaid leaves"
+                value={inputs.unpaidLeaves}
+                readOnly
+                helperText="Auto-set"
+                onChange={(value) => onInputChange('unpaidLeaves', value)}
+              />
+              <PayrollNumberField
+                label="Overtime hrs"
+                value={inputs.overtimeHours}
+                max={200}
+                onChange={(value) => onInputChange('overtimeHours', value)}
+              />
+              <PayrollNumberField label="Bonus" value={inputs.bonus} onChange={(value) => onInputChange('bonus', value)} />
+            </Box>
+
+            <Box
+              sx={{
+                border: '1px solid #DDE5EE',
+                borderRadius: 2,
+                bgcolor: '#F8FBFD',
+                p: 1.75,
+              }}
+            >
+              <Stack spacing={1.25}>
+                <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Gross
+                  </Typography>
+                  <Typography className="money" sx={{ fontWeight: 700 }}>
+                    {formatMoney(result.gross_salary)}
+                  </Typography>
+                </Stack>
+                <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Deductions
+                  </Typography>
+                  <Typography className="money" sx={{ fontWeight: 700 }}>
+                    {formatMoney(result.total_deductions)}
+                  </Typography>
+                </Stack>
+                <Divider />
+                <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2, alignItems: 'baseline' }}>
+                  <Typography variant="subtitle2">Net pay</Typography>
+                  <Typography variant="h6" className="money" color="primary">
+                    {formatMoney(result.net_salary)}
+                  </Typography>
+                </Stack>
+                <Typography variant="caption" color="text.secondary">
+                  PT {formatMoney(result.professional_tax)}. PF employee {formatMoney(result.pf_employee)}. ESI employee{' '}
+                  {formatMoney(result.esi_employee)}.
+                </Typography>
+              </Stack>
+            </Box>
+          </Box>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
 };
 
 export const PayrollRun = () => {
@@ -94,6 +284,9 @@ export const PayrollRun = () => {
   }, [business, employees, inputs, month]);
 
   const summary = useMemo(() => summarizePayroll(results), [results]);
+  const totalPfLiability = summary.total_pf_employee + summary.total_pf_employer;
+  const totalEsiLiability = summary.total_esi_employee + summary.total_esi_employer;
+  const totalStatutory = totalPfLiability + totalEsiLiability + summary.total_professional_tax;
 
   const hasInvalidRows = employees.some((employee) => {
     const employeeInputs = inputs[employee.id] ?? defaultInputsFor(employee, month);
@@ -158,6 +351,17 @@ export const PayrollRun = () => {
     }
   };
 
+  const actionButtons = (
+    <>
+      <Button variant="outlined" disabled={employees.length === 0 || hasInvalidRows || savingDraft} onClick={saveDraft} startIcon={<SaveIcon />}>
+        {savingDraft ? 'Saving...' : 'Save draft'}
+      </Button>
+      <Button variant="contained" disabled={employees.length === 0 || hasInvalidRows || saving} onClick={() => setConfirmOpen(true)} startIcon={<DoneAllIcon />}>
+        {isAmendingCompletedRun ? 'Update payroll' : 'Confirm run'}
+      </Button>
+    </>
+  );
+
   if (loading) return <Typography>Loading payroll...</Typography>;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!business) return <Alert severity="error">Workspace not found.</Alert>;
@@ -169,9 +373,17 @@ export const PayrollRun = () => {
         title={`${isAmendingCompletedRun ? 'Amend' : 'Run'} payroll for ${formatMonth(month)}`}
         subtitle={
           isAmendingCompletedRun
-            ? 'This month was already confirmed. Update the inputs here to include new employees or corrected values.'
-            : 'Enter attendance, leave, overtime, and bonus values. Net pay updates live before you confirm the run.'
+            ? 'Update attendance, overtime, or bonus values and replace the saved payout rows for this month.'
+            : 'Review attendance inputs, statutory deductions, and net pay before confirming payroll.'
         }
+        meta={
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+            <Chip size="small" icon={<EventAvailableIcon />} label={formatMonth(month)} />
+            <Chip size="small" label={`${employees.length} active employees`} variant="outlined" />
+            <Chip size="small" label={hasInvalidRows ? 'Needs review' : 'Auto-save ready'} color={hasInvalidRows ? 'warning' : 'success'} variant="outlined" />
+          </Stack>
+        }
+        actions={actionButtons}
       />
 
       {business.state !== 'Maharashtra' && (
@@ -185,114 +397,89 @@ export const PayrollRun = () => {
         </Alert>
       )}
       {draftRestored && <Alert severity="info">Draft restored from your last session.</Alert>}
-      {employees.length === 0 && (
-        <Alert
-          severity="info"
+
+      {employees.length === 0 ? (
+        <EmptyState
+          icon={<PersonAddIcon fontSize="large" />}
+          title="No employees ready for payroll"
+          description="Add at least one active employee before starting this month's payroll run."
           action={
-            <Button component={RouterLink} to="/employees/new" color="inherit" size="small">
+            <Button component={RouterLink} to="/employees/new" variant="contained" startIcon={<PersonAddIcon />}>
               Add Employee
             </Button>
           }
-        >
-          Add at least one employee before running payroll.
-        </Alert>
-      )}
+        />
+      ) : (
+        <>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 2 }}>
+            <StatCard
+              label="Total gross"
+              value={<Box component="span" className="money">{formatMoney(summary.total_gross)}</Box>}
+              helper={`${summary.employee_count} employees included`}
+              icon={<DescriptionIcon />}
+            />
+            <StatCard
+              label="Total net"
+              value={<Box component="span" className="money">{formatMoney(summary.total_net)}</Box>}
+              helper="Amount payable to employees"
+              icon={<AccountBalanceWalletIcon />}
+              tone="green"
+            />
+            <StatCard
+              label="PF and ESI"
+              value={<Box component="span" className="money">{formatMoney(totalPfLiability + totalEsiLiability)}</Box>}
+              helper={`PF ${formatMoney(totalPfLiability)}. ESI ${formatMoney(totalEsiLiability)}.`}
+              icon={<PercentIcon />}
+              tone="slate"
+            />
+            <StatCard
+              label="Statutory total"
+              value={<Box component="span" className="money">{formatMoney(totalStatutory)}</Box>}
+              helper={`PT ${formatMoney(summary.total_professional_tax)}`}
+              icon={<PercentIcon />}
+              tone="amber"
+            />
+          </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 2 }}>
-        <StatCard label="Total gross" value={<Box component="span" className="money">{formatMoney(summary.total_gross)}</Box>} icon={<DescriptionIcon />} />
-        <StatCard label="Total net" value={<Box component="span" className="money">{formatMoney(summary.total_net)}</Box>} icon={<AccountBalanceWalletIcon />} tone="green" />
-        <StatCard label="PF liability" value={<Box component="span" className="money">{formatMoney(summary.total_pf_employee + summary.total_pf_employer)}</Box>} icon={<PercentIcon />} tone="slate" />
-        <StatCard label="ESI liability" value={<Box component="span" className="money">{formatMoney(summary.total_esi_employee + summary.total_esi_employer)}</Box>} icon={<PercentIcon />} tone="amber" />
-      </Box>
+          <Stack spacing={1.5}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1.5}
+              sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}
+            >
+              <Box>
+                <Typography variant="h6">Employee inputs</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Unpaid leaves are calculated automatically from max payable days.
+                </Typography>
+              </Box>
+              {hasInvalidRows && <Chip color="warning" label="Attendance exceeds month limit" />}
+            </Stack>
 
-      <TableContainer component={Card}>
-        <Table sx={{ minWidth: 980 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Employee</TableCell>
-              <TableCell>Base Salary</TableCell>
-              <TableCell>Days Present</TableCell>
-              <TableCell>Paid Leaves</TableCell>
-              <TableCell>Overtime Hrs</TableCell>
-              <TableCell>Bonus</TableCell>
-              <TableCell align="right">Est. Net Pay</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
             {employees.map((employee, index) => {
               const rowInputs = inputs[employee.id] ?? defaultInputsFor(employee, month);
               const maxDays = calculateMaxDaysForEmployee(new Date(employee.joining_date), month);
               const invalidDays = rowInputs.daysPresent + rowInputs.paidLeaves > maxDays;
-              const result = results[index];
 
               return (
-                <TableRow key={employee.id} hover>
-                  <TableCell>
-                    <Stack>
-                      <Typography variant="subtitle2">{employee.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">{employee.role}</Typography>
-                      <Typography variant="caption" color="text.secondary">Max {maxDays} days this month</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell className="money" sx={{ whiteSpace: 'nowrap' }}>{formatMoney(employee.gross_salary)}</TableCell>
-                  <TableCell>
-                    <TextField
-                      type="number"
-                      value={rowInputs.daysPresent}
-                      error={invalidDays}
-                      slotProps={{ htmlInput: { min: 0, max: maxDays } }}
-                      onChange={(event) => updateInput(employee, 'daysPresent', Number(event.target.value))}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      type="number"
-                      value={rowInputs.paidLeaves}
-                      error={invalidDays}
-                      helperText={invalidDays ? `Max ${maxDays}` : undefined}
-                      slotProps={{ htmlInput: { min: 0, max: maxDays } }}
-                      onChange={(event) => updateInput(employee, 'paidLeaves', Number(event.target.value))}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      type="number"
-                      value={rowInputs.overtimeHours}
-                      slotProps={{ htmlInput: { min: 0, max: 200 } }}
-                      onChange={(event) => updateInput(employee, 'overtimeHours', Number(event.target.value))}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      type="number"
-                      value={rowInputs.bonus}
-                      slotProps={{ htmlInput: { min: 0 } }}
-                      onChange={(event) => updateInput(employee, 'bonus', Number(event.target.value))}
-                    />
-                  </TableCell>
-                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                    <Typography className="money" color="primary" sx={{ fontWeight: 700 }}>
-                      {formatMoney(result?.net_salary ?? 0)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      PT {formatMoney(result?.professional_tax ?? 0)}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
+                <PayrollEmployeeCard
+                  key={employee.id}
+                  employee={employee}
+                  inputs={rowInputs}
+                  result={results[index]}
+                  maxDays={maxDays}
+                  invalidDays={invalidDays}
+                  onInputChange={(key, value) => updateInput(employee, key, value)}
+                />
               );
             })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </Stack>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ justifyContent: 'flex-end' }}>
-        <Button variant="outlined" disabled={employees.length === 0 || hasInvalidRows || savingDraft} onClick={saveDraft} startIcon={<SaveIcon />}>
-          {savingDraft ? 'Saving...' : 'Save draft'}
-        </Button>
-        <Button variant="contained" disabled={employees.length === 0 || hasInvalidRows} onClick={() => setConfirmOpen(true)} startIcon={<DoneAllIcon />}>
-          {isAmendingCompletedRun ? 'Update payroll' : 'Confirm & run payroll'}
-        </Button>
-      </Stack>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ justifyContent: 'flex-end' }}>
+            {actionButtons}
+          </Stack>
+        </>
+      )}
 
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{isAmendingCompletedRun ? 'Update Payroll Run' : 'Confirm Payroll Run'}</DialogTitle>
@@ -302,9 +489,29 @@ export const PayrollRun = () => {
               {isAmendingCompletedRun ? 'You are about to update' : 'You are about to run'} payroll for {formatMonth(month)} for{' '}
               {summary.employee_count} employees.
             </Typography>
-            <Typography className="money" sx={{ fontWeight: 700, color: 'primary.main' }}>
-              Total net payable: {formatMoney(summary.total_net)}
-            </Typography>
+            <Box sx={{ border: '1px solid #DDE5EE', borderRadius: 2, p: 2, bgcolor: '#F8FBFD' }}>
+              <Stack spacing={1}>
+                <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
+                  <Typography color="text.secondary">Total gross</Typography>
+                  <Typography className="money" sx={{ fontWeight: 700 }}>
+                    {formatMoney(summary.total_gross)}
+                  </Typography>
+                </Stack>
+                <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
+                  <Typography color="text.secondary">Statutory deductions</Typography>
+                  <Typography className="money" sx={{ fontWeight: 700 }}>
+                    {formatMoney(totalStatutory)}
+                  </Typography>
+                </Stack>
+                <Divider />
+                <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2, alignItems: 'baseline' }}>
+                  <Typography variant="subtitle2">Total net payable</Typography>
+                  <Typography variant="h6" className="money" color="primary">
+                    {formatMoney(summary.total_net)}
+                  </Typography>
+                </Stack>
+              </Stack>
+            </Box>
             {saving && <LinearProgress />}
           </Stack>
         </DialogContent>
@@ -317,7 +524,9 @@ export const PayrollRun = () => {
       </Dialog>
 
       <Snackbar open={Boolean(message)} autoHideDuration={7000} onClose={() => setMessage(null)}>
-        <Alert severity={message?.type ?? 'info'} onClose={() => setMessage(null)}>{message?.text}</Alert>
+        <Alert severity={message?.type ?? 'info'} onClose={() => setMessage(null)}>
+          {message?.text}
+        </Alert>
       </Snackbar>
     </Stack>
   );

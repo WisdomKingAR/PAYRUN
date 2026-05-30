@@ -25,3 +25,7 @@ VITE_SUPABASE_ANON_KEY=your_anon_public_key
 ## Supabase
 
 Run the SQL scripts in `backend` inside the Supabase SQL Editor before testing the app with real auth and payroll data.
+
+## Deployment
+
+PayRun is prepared for Vercel frontend deployment with Supabase as the hosted backend. See `DEPLOYMENT.md` for the full deployment checklist.

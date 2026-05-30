@@ -71,8 +71,35 @@ WITH CHECK (
 DROP POLICY IF EXISTS "Owners can view their employee payroll records" ON employee_payroll;
 DROP POLICY IF EXISTS "Owners can manage their employee payroll records" ON employee_payroll;
 DROP POLICY IF EXISTS "Owner manages employee payroll of own business" ON employee_payroll;
-CREATE POLICY "Owner manages employee payroll of own business"
-ON employee_payroll FOR ALL
+DROP POLICY IF EXISTS "Owner can view employee payroll rows" ON employee_payroll;
+DROP POLICY IF EXISTS "Owner can insert employee payroll rows" ON employee_payroll;
+DROP POLICY IF EXISTS "Owner can update employee payroll rows" ON employee_payroll;
+DROP POLICY IF EXISTS "Owner can delete employee payroll rows" ON employee_payroll;
+
+CREATE POLICY "Owner can view employee payroll rows"
+ON employee_payroll FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM payroll_runs pr
+    JOIN businesses b ON b.id = pr.business_id
+    WHERE pr.id = employee_payroll.payroll_run_id
+    AND b.owner_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Owner can insert employee payroll rows"
+ON employee_payroll FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM payroll_runs pr
+    JOIN businesses b ON b.id = pr.business_id
+    WHERE pr.id = employee_payroll.payroll_run_id
+    AND b.owner_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Owner can update employee payroll rows"
+ON employee_payroll FOR UPDATE
 USING (
   EXISTS (
     SELECT 1 FROM payroll_runs pr
@@ -82,6 +109,17 @@ USING (
   )
 )
 WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM payroll_runs pr
+    JOIN businesses b ON b.id = pr.business_id
+    WHERE pr.id = employee_payroll.payroll_run_id
+    AND b.owner_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Owner can delete employee payroll rows"
+ON employee_payroll FOR DELETE
+USING (
   EXISTS (
     SELECT 1 FROM payroll_runs pr
     JOIN businesses b ON b.id = pr.business_id

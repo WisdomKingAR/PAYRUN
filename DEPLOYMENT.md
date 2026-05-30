@@ -62,4 +62,5 @@ After the deployment finishes:
 - If refresh on a nested route returns 404, confirm `vercel.json` is present in the repository root.
 - If login works but the dashboard says the workspace could not load, run `backend/setup.sql` again and check Supabase Auth URL settings.
 - If the error mentions multiple rows, run `backend/repair_workspace_bootstrap.sql`.
+- If payroll confirmation says `new row violates row-level security policy for table "employee_payroll"`, run `backend/repair_workspace_bootstrap.sql` so Supabase gets the latest payroll row insert/update/delete policies.
 - If Vercel builds but the app cannot reach Supabase, recheck the two `VITE_SUPABASE_*` environment variables.

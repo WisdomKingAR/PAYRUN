@@ -115,8 +115,45 @@ CREATE POLICY "Magic Link: Employees can view own pending record" ON employees F
 CREATE POLICY "Magic Link: Employees can update own pending record" ON employees FOR UPDATE USING (magic_link_token IS NOT NULL AND onboarding_status = 'pending') WITH CHECK (magic_link_token IS NOT NULL AND onboarding_status = 'pending');
 CREATE POLICY "Owners can view their business audit logs" ON audit_logs FOR SELECT USING (business_id IN (SELECT id FROM businesses WHERE owner_id = auth.uid()));
 CREATE POLICY "Owners can manage their payroll runs" ON payroll_runs FOR ALL USING (business_id IN (SELECT id FROM businesses WHERE owner_id = auth.uid()));
-CREATE POLICY "Owners can view their employee payroll records" ON employee_payroll FOR SELECT USING (payroll_run_id IN (SELECT id FROM payroll_runs WHERE business_id IN (SELECT id FROM businesses WHERE owner_id = auth.uid())));
-CREATE POLICY "Owners can manage their employee payroll records" ON employee_payroll FOR ALL USING (payroll_run_id IN (SELECT id FROM payroll_runs WHERE business_id IN (SELECT id FROM businesses WHERE owner_id = auth.uid()))) WITH CHECK (payroll_run_id IN (SELECT id FROM payroll_runs WHERE business_id IN (SELECT id FROM businesses WHERE owner_id = auth.uid())));
+CREATE POLICY "Owner can view employee payroll rows" ON employee_payroll FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM payroll_runs pr
+    JOIN businesses b ON b.id = pr.business_id
+    WHERE pr.id = employee_payroll.payroll_run_id
+    AND b.owner_id = auth.uid()
+  )
+);
+CREATE POLICY "Owner can insert employee payroll rows" ON employee_payroll FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM payroll_runs pr
+    JOIN businesses b ON b.id = pr.business_id
+    WHERE pr.id = employee_payroll.payroll_run_id
+    AND b.owner_id = auth.uid()
+  )
+);
+CREATE POLICY "Owner can update employee payroll rows" ON employee_payroll FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM payroll_runs pr
+    JOIN businesses b ON b.id = pr.business_id
+    WHERE pr.id = employee_payroll.payroll_run_id
+    AND b.owner_id = auth.uid()
+  )
+) WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM payroll_runs pr
+    JOIN businesses b ON b.id = pr.business_id
+    WHERE pr.id = employee_payroll.payroll_run_id
+    AND b.owner_id = auth.uid()
+  )
+);
+CREATE POLICY "Owner can delete employee payroll rows" ON employee_payroll FOR DELETE USING (
+  EXISTS (
+    SELECT 1 FROM payroll_runs pr
+    JOIN businesses b ON b.id = pr.business_id
+    WHERE pr.id = employee_payroll.payroll_run_id
+    AND b.owner_id = auth.uid()
+  )
+);
 
 CREATE OR REPLACE FUNCTION update_timestamp() RETURNS TRIGGER AS $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END; $$ LANGUAGE plpgsql;
 CREATE TRIGGER set_updated_at_businesses BEFORE UPDATE ON businesses FOR EACH ROW EXECUTE FUNCTION update_timestamp();

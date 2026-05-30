@@ -323,7 +323,8 @@ export async function confirmPayrollRun(
     payrollRunId = normalizePayrollRun(asRecord(run)).id;
   }
 
-  await supabase.from('employee_payroll').delete().eq('payroll_run_id', payrollRunId);
+  const { error: deleteError } = await supabase.from('employee_payroll').delete().eq('payroll_run_id', payrollRunId);
+  if (deleteError) throw deleteError;
 
   const { error: employeeError } = await supabase.from('employee_payroll').insert(
     employeeResults.map((result) => ({

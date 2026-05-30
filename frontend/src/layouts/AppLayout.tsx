@@ -48,6 +48,14 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
     navigate('/login', { replace: true });
   };
 
+  const handleBrandClick = async () => {
+    if (user) {
+      await signOut();
+    }
+
+    navigate('/', { replace: true });
+  };
+
   const navigation = (
     <List sx={{ px: 1.5, py: 2 }}>
       {navItems.map((item) => {
@@ -80,7 +88,25 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: { xs: 8, md: 0 } }}>
       <AppBar sx={{ zIndex: (appTheme) => appTheme.zIndex.drawer + 1 }}>
         <Toolbar>
-          <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 800, flexGrow: 1 }}>
+          <Typography
+            aria-label="Go to PayRun landing page"
+            component="button"
+            type="button"
+            variant="h6"
+            onClick={() => void handleBrandClick()}
+            sx={{
+              color: 'primary.main',
+              fontWeight: 800,
+              flexGrow: 1,
+              border: 0,
+              bgcolor: 'transparent',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              p: 0,
+              textAlign: 'left',
+              '&:hover': { textDecoration: 'underline' },
+            }}
+          >
             PayRun
           </Typography>
           {user && (

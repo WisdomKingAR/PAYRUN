@@ -15,9 +15,12 @@ export const Auth = ({ mode }: { mode: AuthMode }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [verificationEmail, setVerificationEmail] = useState('');
 
   const isSignup = mode === 'signup';
   const redirectTo = typeof location.state === 'object' && location.state ? String(location.state.from ?? '/dashboard') : '/dashboard';
+  const canResendVerification =
+    isSignup && verificationEmail.length > 0 && email.trim().toLowerCase() === verificationEmail.toLowerCase();
 
   const handleSubmit = async () => {
     const normalizedEmail = email.trim();
@@ -54,6 +57,7 @@ export const Auth = ({ mode }: { mode: AuthMode }) => {
           setMessage({ type: 'error', text: getErrorMessage(caught, 'Account created, but workspace setup failed.') });
         }
       } else {
+        setVerificationEmail(normalizedEmail);
         setMessage({
           type: 'success',
           text: 'Account created. Check your email to verify it before logging in.',
@@ -78,8 +82,8 @@ export const Auth = ({ mode }: { mode: AuthMode }) => {
   const resendVerification = async () => {
     const normalizedEmail = email.trim();
 
-    if (!normalizedEmail) {
-      setMessage({ type: 'error', text: 'Enter your email first.' });
+    if (!canResendVerification || !normalizedEmail) {
+      setMessage({ type: 'error', text: 'Create an account first, then resend the verification email.' });
       return;
     }
 
@@ -148,9 +152,11 @@ export const Auth = ({ mode }: { mode: AuthMode }) => {
 
           {isSignup ? (
             <Stack spacing={1} sx={{ alignItems: 'center' }}>
-              <Button variant="text" disabled={loading} onClick={resendVerification}>
-                Resend verification email
-              </Button>
+              {canResendVerification && (
+                <Button variant="text" disabled={loading} onClick={resendVerification}>
+                  Resend verification email
+                </Button>
+              )}
               <Typography variant="body2" color="text.secondary">
                 Already have an account?{' '}
                 <Link component={RouterLink} to="/login">

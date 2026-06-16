@@ -8,8 +8,18 @@ import {
 
 const baseEmployee = {
   id: "emp-1",
+  business_id: "biz-1",
   name: "Test Employee",
+  email: null,
+  phone_number: null,
   role: "Developer",
+  joining_date: "2020-01-01",
+  pan: null,
+  aadhaar_number: null,
+  bank_account_no: null,
+  ifsc_code: null,
+  onboarding_status: "completed" as const,
+  magic_link_token: null,
   basic_salary: 15000,
   hra: 3000,
   special_allowance: 2000,
@@ -18,6 +28,9 @@ const baseEmployee = {
   pf_applicable: true,
   esi_applicable: true,
   gender: "male" as const,
+  is_active: true,
+  created_at: "2020-01-01",
+  updated_at: "2020-01-01",
 };
 
 const standardInputs = {

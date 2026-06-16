@@ -381,15 +381,13 @@ export async function savePayrollDraft(
     if (error) throw error;
     return;
   }
-  const { error } = await supabase
-    .from("payroll_runs")
-    .insert({
-      business_id: businessId,
-      month,
-      month_display: formatMonth(month),
-      status: "draft",
-      draft_data: draftData,
-    });
+  const { error } = await supabase.from("payroll_runs").insert({
+    business_id: businessId,
+    month,
+    month_display: formatMonth(month),
+    status: "draft",
+    draft_data: draftData,
+  });
   if (error) throw error;
 }
 

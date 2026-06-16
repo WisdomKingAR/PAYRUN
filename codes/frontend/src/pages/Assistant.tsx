@@ -117,7 +117,9 @@ export const Assistant = () => {
               >
                 {message.role === "assistant" ? "Assistant" : "You"}
               </Typography>
-              <Typography sx={{ whiteSpace: "pre-line" }}>{message.text}</Typography>
+              <Typography sx={{ whiteSpace: "pre-line" }}>
+                {message.text}
+              </Typography>
             </Paper>
           ))}
         </Box>

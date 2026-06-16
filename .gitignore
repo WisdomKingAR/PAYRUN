@@ -6,6 +6,9 @@ node_modules_old/
 dist/
 dist-ssr/
 
+# Documentation
+DOCUMENTATION/
+
 # Environment
 .env
 .env.*

@@ -131,8 +131,8 @@ export async function logAudit(
   targetType: string,
   targetId: string,
   action: string,
-  oldData?: any,
-  newData?: any,
+  oldData?: unknown,
+  newData?: unknown,
 ) {
   await supabase.from("audit_logs").insert({
     business_id: businessId,

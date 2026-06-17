@@ -37,6 +37,16 @@ import { formatMoney } from "../utils/format";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { PageHeader } from "../components/PageHeader";
 import { StatCard } from "../components/StatCard";
+import {
+  validateEmployee,
+  validatePAN,
+  validateAadhaar,
+  validateIFSC,
+  validateBankAccountNumber,
+  validateEmail,
+  validatePhoneNumber,
+  type EmployeeValidationResult,
+} from "../utils/validators";
 
 const today = new Date().toISOString().slice(0, 10);
 const emptyForm: EmployeeInput = {
@@ -68,6 +78,7 @@ export const EmployeeForm = () => {
   const [form, setForm] = useState<EmployeeInput>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [magicLink, setMagicLink] = useState<string | null>(null);
 
   const grossSalary = useMemo(
@@ -106,6 +117,64 @@ export const EmployeeForm = () => {
     value: EmployeeInput[Key],
   ) => {
     setForm((current) => ({ ...current, [key]: value }));
+    
+    // Clear validation error for this field when user modifies it
+    setValidationErrors((current) => {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+    
+    // Real-time validation for specific fields
+    if (key === "pan" && value !== undefined) {
+      const result = validatePAN(String(value));
+      if (!result.valid && value !== "") {
+        setValidationErrors((current) => ({
+          ...current,
+          pan: result.error || "",
+        }));
+      }
+    } else if (key === "aadhaar_number" && value !== undefined) {
+      const result = validateAadhaar(String(value));
+      if (!result.valid && value !== "") {
+        setValidationErrors((current) => ({
+          ...current,
+          aadhaar_number: result.error || "",
+        }));
+      }
+    } else if (key === "ifsc_code" && value !== undefined) {
+      const result = validateIFSC(String(value));
+      if (!result.valid && value !== "") {
+        setValidationErrors((current) => ({
+          ...current,
+          ifsc_code: result.error || "",
+        }));
+      }
+    } else if (key === "bank_account_no" && value !== undefined) {
+      const result = validateBankAccountNumber(String(value));
+      if (!result.valid && value !== "") {
+        setValidationErrors((current) => ({
+          ...current,
+          bank_account_no: result.error || "",
+        }));
+      }
+    } else if (key === "email" && value !== undefined) {
+      const result = validateEmail(String(value));
+      if (!result.valid && value !== "") {
+        setValidationErrors((current) => ({
+          ...current,
+          email: result.error || "",
+        }));
+      }
+    } else if (key === "phone_number" && value !== undefined) {
+      const result = validatePhoneNumber(String(value));
+      if (!result.valid && value !== "") {
+        setValidationErrors((current) => ({
+          ...current,
+          phone_number: result.error || "",
+        }));
+      }
+    }
   };
 
   const updateBasicSalary = (value: number) => {
@@ -130,18 +199,43 @@ export const EmployeeForm = () => {
 
   const saveEmployee = async (useMagicLink: boolean = false) => {
     if (!business) return;
-    if (!form.name.trim() || !form.role.trim() || form.basic_salary <= 0) {
-      setFormError("Name, role, and base salary are required.");
+    
+    // Client-side validation
+    const validation: EmployeeValidationResult = validateEmployee({
+      name: form.name,
+      email: form.email,
+      phone_number: form.phone_number,
+      pan: form.pan,
+      aadhaar_number: form.aadhaar_number,
+      bank_account_no: form.bank_account_no,
+      ifsc_code: form.ifsc_code,
+      basic_salary: form.basic_salary,
+      hra: form.hra,
+      special_allowance: form.special_allowance,
+    });
+    
+    if (!validation.valid) {
+      setValidationErrors(validation.errors);
+      setFormError("Please fix the validation errors below.");
       return;
     }
+    
+    if (form.basic_salary <= 0) {
+      setFormError("Base salary must be greater than zero.");
+      return;
+    }
+    
     setSaving(true);
     setFormError(null);
+    setValidationErrors({});
+    
     const payload: EmployeeInput = {
       ...form,
       name: form.name.trim(),
       role: form.role.trim(),
       onboarding_status: useMagicLink ? "pending" : "completed",
     };
+    
     try {
       if (id) {
         await updateEmployee(id, payload);
@@ -269,6 +363,8 @@ export const EmployeeForm = () => {
                 onChange={(event) =>
                   updateField("phone_number", event.target.value)
                 }
+                error={Boolean(validationErrors.phone_number)}
+                helperText={validationErrors.phone_number || "E.164 or 10 digits"}
               />
               <TextField
                 label="Base Salary"
@@ -318,6 +414,8 @@ export const EmployeeForm = () => {
                 label="PAN"
                 value={form.pan ?? ""}
                 onChange={(event) => updateField("pan", event.target.value)}
+                error={Boolean(validationErrors.pan)}
+                helperText={validationErrors.pan || "Format: AAAAA0000A"}
               />
               <TextField
                 label="Aadhaar"
@@ -325,6 +423,8 @@ export const EmployeeForm = () => {
                 onChange={(event) =>
                   updateField("aadhaar_number", event.target.value)
                 }
+                error={Boolean(validationErrors.aadhaar_number)}
+                helperText={validationErrors.aadhaar_number || "12 digits"}
               />
               <TextField
                 label="Bank Account"
@@ -332,6 +432,8 @@ export const EmployeeForm = () => {
                 onChange={(event) =>
                   updateField("bank_account_no", event.target.value)
                 }
+                error={Boolean(validationErrors.bank_account_no)}
+                helperText={validationErrors.bank_account_no || "9-18 digits"}
               />
               <TextField
                 label="IFSC"
@@ -339,6 +441,8 @@ export const EmployeeForm = () => {
                 onChange={(event) =>
                   updateField("ifsc_code", event.target.value)
                 }
+                error={Boolean(validationErrors.ifsc_code)}
+                helperText={validationErrors.ifsc_code || "Format: AAAA0XXXXXX"}
               />
             </Box>
             <Stack direction="row" spacing={2}>

@@ -1,7 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 ALTER TABLE businesses
-  ADD COLUMN IF NOT EXISTS whatsapp_api_key TEXT;
+  ADD COLUMN IF NOT EXISTS whatsapp_api_key BYTEA;
 
 ALTER TABLE businesses
   ADD COLUMN IF NOT EXISTS onboarding_step INTEGER NOT NULL DEFAULT 1 CHECK (onboarding_step BETWEEN 1 AND 3);
@@ -9,12 +9,15 @@ ALTER TABLE businesses
 ALTER TABLE employees
   ADD COLUMN IF NOT EXISTS email TEXT,
   ADD COLUMN IF NOT EXISTS phone_number TEXT,
-  ADD COLUMN IF NOT EXISTS pan TEXT,
-  ADD COLUMN IF NOT EXISTS aadhaar_number TEXT,
-  ADD COLUMN IF NOT EXISTS bank_account_no TEXT,
-  ADD COLUMN IF NOT EXISTS ifsc_code TEXT,
+  ADD COLUMN IF NOT EXISTS pan BYTEA,
+  ADD COLUMN IF NOT EXISTS aadhaar_number BYTEA,
+  ADD COLUMN IF NOT EXISTS bank_account_no BYTEA,
+  ADD COLUMN IF NOT EXISTS ifsc_code BYTEA,
   ADD COLUMN IF NOT EXISTS onboarding_status TEXT DEFAULT 'pending' CHECK (onboarding_status IN ('pending', 'completed')),
   ADD COLUMN IF NOT EXISTS magic_link_token UUID DEFAULT gen_random_uuid() UNIQUE,
+  ADD COLUMN IF NOT EXISTS magic_link_token_hash BYTEA,
+  ADD COLUMN IF NOT EXISTS magic_link_expires_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS magic_link_used_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS other_allowances JSONB NOT NULL DEFAULT '{}',
   ADD COLUMN IF NOT EXISTS gender TEXT NOT NULL DEFAULT 'male' CHECK (gender IN ('male', 'female', 'other'));
 
